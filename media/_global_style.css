@@ -112,4 +112,35 @@
   .card-box table .cloze {
     white-space: nowrap; /* Verhindert hässliche Zeilenumbrüche mitten im Lückentext-Wort */
   }
+
+  /* =======================================================
+     5. ADD-ON NOTIZTYPEN (MC, Image Occlusion)
+     ======================================================= */
+
+  /* Multiple Choice (AllInOne) */
+  .mc-question { text-align: left; max-width: 600px; }
+  .mc-options { max-width: 600px; margin: 0 auto; }
+  #myH1 { margin-top: 0; font-size: 1.15em; }
+  #canswerresult { margin-top: 1em; }
+
+  /* Natives Image Occlusion (Bildverdeckung) */
+  .io-native-header { margin-bottom: 1em; text-align: center; }
+  #image-occlusion-container { margin: 0 auto; }
+  #toggle {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #dcdde1;
+    background: #ffffff;
+    cursor: pointer;
+    margin: 1em auto;
+    font-size: 0.85em;
+  }
+  .nightMode #toggle,
+  @media (prefers-color-scheme: dark) {
+    #toggle {
+      background: #2a2b36;
+      border-color: #4a4b56;
+      color: #f5f6fa;
+    }
+  }
   
