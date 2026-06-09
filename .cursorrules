@@ -1,7 +1,1 @@
-Regeln in `project_config.md`. Fortschritt in `workflow_status.md`. Agent-Details: `docs/agents.md`.
-
-Karteikarten NUR aus `lectures/**/processed/**` und `lectures/**/cards/**` – nie aus `raw/` PDFs.
-
-Neue Folien: zuerst `batch_extract_course.py`. Backup vor Anki-Bulk (>5 Karten).
-
-Skripte: dauerhaft in `scripts/` · kurzlebig in `scripts/_scratch/` · siehe `docs/agents.md`.
+See AGENTS.md and .cursor/rules/ for agent instructions.

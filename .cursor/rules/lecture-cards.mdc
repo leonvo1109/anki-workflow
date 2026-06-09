@@ -1,0 +1,13 @@
+---
+description: Rules when editing lecture data or card drafts
+globs: lectures/**/*
+alwaysApply: false
+---
+
+# Lecture & card files
+
+- Primary source: `processed/{kapitel}/slides.json` (not PDFs in `raw/`)
+- Skip slides with `"organizational": true`
+- Course import config: sibling `anki.json`; curated cards in `cards/anki_curated.json`
+- IO diagrams: use `occlusion/manifest.json` → `import_io_stubs.py`; do not draw SVG masks via MCP
+- Card quality rules: `project_config.md` (types, density, language)

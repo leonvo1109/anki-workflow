@@ -48,3 +48,4 @@ Vor größeren Imports: Backup nach `backups/` (s. [Befehle](docs/commands.md#ba
 
 - **[Befehle](docs/commands.md)** – Extraktion, Sync, Import, Backup
 - **[Notiztypen](media/note-types/OVERVIEW.md)** – CSS/Typen mit Anki synchronisieren
+- **[AGENTS.md](AGENTS.md)** – Cursor/Agent-Anweisungen (nur bei KI-Setup relevant)

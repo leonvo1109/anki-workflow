@@ -1,0 +1,14 @@
+---
+description: Core Anki-workflow rules (pipeline, data sources, backups)
+alwaysApply: true
+---
+
+# Anki-workflow core
+
+Read `AGENTS.md` and `workflow_status.md` before bulk work.
+
+- Cards from `lectures/**/processed/**` and `lectures/**/cards/` only — not `raw/` PDFs
+- Extract new PDFs with `batch_extract_course.py` before creating cards
+- Backup in `backups/` before Anki imports >5 cards
+- Permanent scripts in `scripts/`; ephemeral helpers in `scripts/_scratch/`
+- Update `workflow_status.md` after extraction, import, or backup
