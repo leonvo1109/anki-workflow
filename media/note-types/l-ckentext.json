@@ -1,0 +1,16 @@
+{
+  "name": "Lückentext",
+  "type": "cloze",
+  "managed_by_addon": false,
+  "fields": [
+    "Text",
+    "Rückseite Extra"
+  ],
+  "css": "@import url(\"_global_style.css\");\n",
+  "templates": {
+    "Lückentext": {
+      "Front": "<div class=\"card-box\">\n  {{cloze:Text}}\n</div>\n",
+      "Back": "<div class=\"card-box\">\n  {{cloze:Text}}\n  {{#Rückseite Extra}}\n    <hr id=\"answer\">\n    {{Rückseite Extra}}\n  {{/Rückseite Extra}}\n</div>\n"
+    }
+  }
+}

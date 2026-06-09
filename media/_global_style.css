@@ -1,0 +1,115 @@
+/*
+ * Anki global card styling – bearbeiten in diesem Repo, dann syncen:
+ *   python scripts/sync_anki_style.py push
+ *
+ * In Notizvorlagen eingebunden via:
+ *   @import url("_global_style.css");
+ *
+ * Füge dein CSS unten ein (ersetzt diesen Platzhalter).
+ */
+
+ /* =======================================================
+   1. STANDARD-MODUS (Heller Modus für Desktop & Web)
+   ======================================================= */
+.card { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+    font-size: 20px; 
+    line-height: 1.5; 
+    text-align: left; 
+    color: #2c3e50; 
+    background-color: #f5f6fa; 
+    letter-spacing: 0.5px; 
+  } 
+  
+  .card-box { 
+    background-color: #ffffff; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); 
+    padding: 30px; 
+    max-width: 500px; 
+    margin: 40px auto; 
+  } 
+  
+  body { 
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+  }
+  
+  /* Standard-Farbe für Lückentexte (Cloze) */
+  .cloze {
+    color: #c0392b !important;
+    font-weight: bold;
+  }
+  
+  /* =======================================================
+     2. DUNKELMODUS FÜR ANKI APPS (Desktop & Mobile)
+     ======================================================= */
+  .nightMode.card { color: #f5f6fa; background-color: #1e1e24; }
+  .nightMode .card-box { background-color: #2a2b36; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
+  .nightMode body { background: linear-gradient(135deg, #141419 0%, #282c34 100%); }
+  .nightMode .cloze { color: #e74c3c !important; }
+  
+  /* =======================================================
+     3. DUNKELMODUS FÜR ANKIWEB (Browser)
+     ======================================================= */
+  @media (prefers-color-scheme: dark) {
+    .card { 
+      color: #f5f6fa; 
+      background-color: #1e1e24; 
+    }
+    
+    .card-box { 
+      background-color: #2a2b36; 
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); 
+    }
+    
+    body { 
+      background: linear-gradient(135deg, #141419 0%, #282c34 100%); 
+    }
+  
+    .cloze {
+      color: #e74c3c !important;
+    }
+  }
+  
+  /* =======================================================
+     4. RESPONSIVE TABELLEN & CLOZE-OPTIMIERUNG
+     ======================================================= */
+  
+  /* Verhindert das Herausragen: Fügt Scrollbalken hinzu, wenn die Tabelle zu breit wird */
+  .card-box {
+    overflow-x: auto;
+  }
+  
+  /* Optimierung für alle Tabellen innerhalb der Karte */
+  .card-box table {
+    width: 100%;
+    max-width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 14px; /* Macht den Text in Tabellen gezielt kleiner (Standard ist 20px) */
+    line-height: 1.4;
+  }
+  
+  /* Styling für Tabellenzellen, damit sie sauber aussehen */
+  .card-box th, 
+  .card-box td {
+    padding: 8px 10px;
+    border: 1px solid #dcdde1;
+    text-align: left;
+  }
+  
+  /* Dunkelmodus-Anpassung für die Tabellen-Linien */
+  .nightMode .card-box th, 
+  .nightMode .card-box td,
+  @media (prefers-color-scheme: dark) {
+    .card-box th, 
+    .card-box td {
+      border-color: #4a4b56; /* Dunklere Linien im Darkmode */
+    }
+  }
+  
+  /* Verhindert, dass die Lückentexte in Tabellen das Layout verzerren */
+  .card-box table .cloze {
+    white-space: nowrap; /* Verhindert hässliche Zeilenumbrüche mitten im Lückentext-Wort */
+  }
+  

@@ -1,0 +1,16 @@
+{
+  "name": "Einfach (Antwort eintippen)",
+  "type": "standard",
+  "managed_by_addon": false,
+  "fields": [
+    "Vorderseite",
+    "Rückseite"
+  ],
+  "css": "@import url(\"_global_style.css\");\n",
+  "templates": {
+    "Karte 1": {
+      "Front": "<div class=\"card-box\">\n  {{Vorderseite}}\n</div>\n",
+      "Back": "<div class=\"card-box\">\n  {{Vorderseite}}\n  <hr id=\"answer\">\n  {{Rückseite}}\n</div>\n"
+    }
+  }
+}
