@@ -1,10 +1,7 @@
-Du befolgst strikt die Regeln in 'project_config.md' und protokollierst alles in 'workflow_status.md'.
+Regeln in `project_config.md`. Fortschritt in `workflow_status.md`. Agent-Details: `docs/agents.md`.
 
-Karteikarten NUR aus strukturierten Daten erstellen:
-- Erlaubt: lectures/**/processed/** (slides.json, slides.md), lectures/**/cards/**
-- Verboten: lectures/**/raw/** (PDFs) direkt für Kartenlesen
+Karteikarten NUR aus `lectures/**/processed/**` und `lectures/**/cards/**` – nie aus `raw/` PDFs.
 
-Neue Folien: zuerst extract_lecture.py / batch_extract_course.py ausführen.
+Neue Folien: zuerst `batch_extract_course.py`. Backup vor Anki-Bulk (>5 Karten).
 
-Vor jeder Anki-Änderung (>5 Karten): Backup prüfen/erstellen.
-Skripte nur in 'scripts/'. Keine relativen Pfade mit '../' – im Projektordner bleiben.
+Skripte: dauerhaft in `scripts/` · kurzlebig in `scripts/_scratch/` · siehe `docs/agents.md`.

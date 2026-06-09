@@ -16,7 +16,9 @@ Du bist ein Lernmethodik-Assistent. Du erstellst Karteikarten nach den Prinzipie
 ```
 anki-workflow/
 ├── backups/                    # Anki collection.anki2 Sicherungen
-├── scripts/                    # Extraktion, IO-Stubs, Wiederherstellung
+├── scripts/                    # Pipeline-Skripte (getrackt, s. scripts/README.md)
+│   ├── lecture_import/         # Import-Modul
+│   └── _scratch/               # kurzlebig, gitignored (short/ | long/)
 ├── lectures/
 │   ├── _template/              # Vorlage für neue Kurse (raw / processed / cards)
 │   └── semester{N}/
@@ -162,27 +164,8 @@ Alternativ kann Cursor dieselben Notizen per `anki_create_notes` anlegen, wenn B
 
 ---
 
-## Skripte (`/scripts`)
+## Skripte
 
-| Skript | Zweck |
-|--------|--------|
-| `extract_lecture.py` | PDF → `processed/{slug}/` |
-| `classify_images.py` | Bilder bewerten (Vision + Heuristiken) → gefiltertes Manifest |
-| `vision_classify.swift` | Apple Vision Hilfsskript (macOS) |
-| `batch_extract_course.py` | Alle PDFs in `raw/` eines Kurses (+ `--classify`) |
-| `import_io_stubs.py` | IO-Kandidaten → Anki (AnkiConnect) |
-| `restore_backup.py` | Backup zurückspielen |
+Nutzer-Befehle: `docs/commands.md` · Agent/Scratch-Policy: `docs/agents.md`
 
-- Dateinamen: klein, Unterstriche
-- Kopfkommentar: Datum, Beschreibung, Abhängigkeiten
-- Neue PDFs **immer zuerst** nach `lectures/.../raw/` legen, dann extrahieren
-
----
-
-## Neuen Kurs anlegen
-
-```bash
-cp -r lectures/_template "lectures/semester4/Mein Kurs"
-# PDFs nach .../Mein Kurs/raw/
-python scripts/batch_extract_course.py "lectures/semester4/Mein Kurs"
-```
+Neuer Kurs: `_template` kopieren → PDFs nach `raw/` → `batch_extract_course.py` → `anki.json` → `import_lecture_cards.py --import-io`

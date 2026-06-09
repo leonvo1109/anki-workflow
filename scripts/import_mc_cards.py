@@ -12,7 +12,7 @@ Notiztyp: „AllInOne (kprim, mc, sc)“
 from __future__ import annotations
 
 import argparse
-import importlib.util
+import json
 import random
 import re
 import sys
@@ -43,12 +43,15 @@ def invoke(action: str, **params):
     return payload.get("result")
 
 
-def load_curated_mc() -> list[dict]:
-    spec = importlib.util.spec_from_file_location("import_lecture_cards", SCRIPT_DIR / "import_lecture_cards.py")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)  # type: ignore
+def load_curated_mc(course_dir: Path | None = None) -> list[dict]:
+    course_dir = course_dir or Path("lectures/semester4/Betriebssysteme 1")
+    curated_path = course_dir / "cards" / "anki_curated.json"
+    if not curated_path.exists():
+        print(f"Fehler: {curated_path} fehlt", file=sys.stderr)
+        sys.exit(1)
+    data = json.loads(curated_path.read_text(encoding="utf-8"))
     items: list[dict] = []
-    for chapter_items in mod.CURATED.values():
+    for chapter_items in data.values():
         for item in chapter_items:
             if item["type"] in ("mc", "tf"):
                 items.append(item)

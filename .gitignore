@@ -10,6 +10,12 @@ backups/*
 # --- Persönlicher Workflow-Log (lokal) ---
 workflow_status.md
 
+# --- Kurzlebige Agent-/Debug-Skripte (Inhalt) ---
+scripts/_scratch/short/
+scripts/_scratch/long/
+scripts/_scratch/*
+!scripts/_scratch/README.md
+
 # --- Lokale Konfiguration ---
 .env
 local_config.json
