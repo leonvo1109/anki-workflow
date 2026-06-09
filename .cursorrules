@@ -1,0 +1,10 @@
+Du befolgst strikt die Regeln in 'project_config.md' und protokollierst alles in 'workflow_status.md'.
+
+Karteikarten NUR aus strukturierten Daten erstellen:
+- Erlaubt: lectures/**/processed/** (slides.json, slides.md), lectures/**/cards/**
+- Verboten: lectures/**/raw/** (PDFs) direkt für Kartenlesen
+
+Neue Folien: zuerst extract_lecture.py / batch_extract_course.py ausführen.
+
+Vor jeder Anki-Änderung (>5 Karten): Backup prüfen/erstellen.
+Skripte nur in 'scripts/'. Keine relativen Pfade mit '../' – im Projektordner bleiben.
