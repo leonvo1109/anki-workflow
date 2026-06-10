@@ -7,8 +7,9 @@ alwaysApply: true
 
 Read `AGENTS.md` and `workflow_status.md` before bulk work.
 
-- Cards from `lectures/**/processed/**` and `lectures/**/cards/` only — not `raw/` PDFs
+- Cards from `lectures/**/processed/**`, `lectures/**/cards/`, and `lectures/**/exam.md` only — not `raw/` PDFs
 - Extract new PDFs with `batch_extract_course.py` before creating cards
 - Backup in `backups/` before Anki imports >5 cards
 - Permanent scripts in `scripts/`; ephemeral helpers in `scripts/_scratch/`
 - Update `workflow_status.md` after extraction, import, or backup
+- MC/TF: `anki_curated.json` (`type: mc|tf`) → `import_lecture_cards.py` → `import_mc_cards.py` (Add-on 1566095810); details in `AGENTS.md`

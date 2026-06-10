@@ -32,12 +32,25 @@ python scripts/import_io_stubs.py "{Kurs}" --course
 python scripts/import_io_stubs.py "{Kapitel}" --deck "{Deck}"
 ```
 
-MC-Karten (Add-on [1566095810](https://ankiweb.net/shared/info/1566095810)):
+MC-Karten (Add-on [1566095810](https://ankiweb.net/shared/info/1566095810) installieren, Anki neu starten):
+
+Entwurf in `cards/anki_curated.json` als `"type": "mc"` / `"tf"`, dann:
 
 ```bash
-python scripts/import_mc_cards.py --dry-run
-python scripts/import_mc_cards.py --migrate --delete-pseudo
+# 1. Text-Karten inkl. Pseudo-MC (Einfach mit ☐ Ankreuzen)
+python scripts/import_lecture_cards.py "{Kurs}"
+
+# 2. Echte MC aus curated (Deck/Tag aus anki.json je Kapitel)
+python scripts/import_mc_cards.py "{Kurs}" --dry-run
+python scripts/import_mc_cards.py "{Kurs}"
+
+# 3. Bestehende Pseudo-MC migrieren (ein Kurs oder ganzes Semester)
+python scripts/import_mc_cards.py "{Kurs}" --migrate --dry-run
+python scripts/import_mc_cards.py "{Kurs}" --migrate --delete-pseudo
+python scripts/import_mc_cards.py --semester lectures/semester4 --migrate --delete-pseudo
 ```
+
+Notiztyp: `AllInOne (kprim, mc, sc)` · Single Choice = Feld `QType` = `2`.
 
 ## Anki-Styling
 

@@ -5,7 +5,8 @@ Anki-Karten aus Vorlesungsfolien. Nutzer-Doku: [README.md](README.md) · Befehle
 ## Before you act
 
 1. Read `workflow_status.md` (local, not in git)
-2. Follow `project_config.md` for pipeline, card types, IO workflow
+2. Read `lectures/.../{Kurs}/exam.md` if present — aligns card depth, types, and exclusions to the exam
+3. Follow `project_config.md` for pipeline, card types, IO workflow
 
 ## Hard rules
 
@@ -21,6 +22,32 @@ Anki-Karten aus Vorlesungsfolien. Nutzer-Doku: [README.md](README.md) · Befehle
 - Curated/cleanup: `cards/anki_curated.json`, `cards/anki_cleanup.json`
 - Import: `python scripts/import_lecture_cards.py "{Kurs}"` or MCP `user-anki`
 - IO stubs: `import_io_stubs.py --course`; masks only in Anki Desktop manually
+
+## Multiple Choice (MC)
+
+**Add-on (einmalig):** [Multiple Choice](https://ankiweb.net/shared/info/1566095810) (Code `1566095810`) → Anki neu starten → Notiztyp `AllInOne (kprim, mc, sc)` muss existieren.
+
+**Zwei Stufen:**
+
+1. **Entwurf** in `cards/anki_curated.json` mit `"type": "mc"` oder `"tf"` (nicht direkt als `Einfach` schreiben).
+2. **Import:** zuerst `import_lecture_cards.py` (legt Pseudo-MC als `Einfach` mit `☐ Ankreuzen:` an), dann `import_mc_cards.py` (echte interaktive MC-Karten).
+
+**`mc` in curated** — Pflichtfelder:
+
+```json
+{
+  "type": "mc",
+  "front": "Frage ohne Präfix",
+  "back": "✓ Richtige Antwort",
+  "distractors": ["falsch 1", "falsch 2", "falsch 3"]
+}
+```
+
+**`tf`:** `"front": "Stimmt: …"`, `"back": "✓ …"` oder `"✗ …"`.
+
+**Migration bestehender Pseudo-Karten:** `import_mc_cards.py "{Kurs}" --migrate` (oder `--semester lectures/semester4`) findet Pseudo-Karten im Kurs-Deck; `--delete-pseudo` entfernt die alten. Vor Bulk-Migration Backup in `backups/`.
+
+**Cleanup:** Löschen/Umbenennen über `cards/anki_cleanup.json`; MC-Migration separat, nicht per MCP-Masken.
 
 ## Scripts
 

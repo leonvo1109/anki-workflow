@@ -12,7 +12,6 @@ Notiztyp: „AllInOne (kprim, mc, sc)“
 from __future__ import annotations
 
 import argparse
-import json
 import random
 import re
 import sys
@@ -26,12 +25,11 @@ except ImportError:
 
 ANKI_CONNECT = "http://127.0.0.1:8765"
 MC_MODEL = "AllInOne (kprim, mc, sc)"
-COURSE = "4. Semester::Betriebssysteme 1"
-
-# Add-on installieren: Anki → Extras → Add-ons → Herunterladen → Code: 1566095810
-# Danach Anki neu starten (Notiztyp wird automatisch angelegt).
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPT_DIR))
+
+from lecture_import.config import CourseConfig, load_course_config
 
 
 def invoke(action: str, **params):
@@ -43,18 +41,24 @@ def invoke(action: str, **params):
     return payload.get("result")
 
 
-def load_curated_mc(course_dir: Path | None = None) -> list[dict]:
-    course_dir = course_dir or Path("lectures/semester4/Betriebssysteme 1")
-    curated_path = course_dir / "cards" / "anki_curated.json"
-    if not curated_path.exists():
-        print(f"Fehler: {curated_path} fehlt", file=sys.stderr)
+def discover_courses(semester_dir: Path) -> list[Path]:
+    semester_dir = semester_dir.resolve()
+    if not semester_dir.is_dir():
+        print(f"Semester-Ordner fehlt: {semester_dir}", file=sys.stderr)
         sys.exit(1)
-    data = json.loads(curated_path.read_text(encoding="utf-8"))
-    items: list[dict] = []
-    for chapter_items in data.values():
+    courses = sorted(p.parent for p in semester_dir.glob("*/anki.json"))
+    if not courses:
+        print(f"Keine Kurse mit anki.json in {semester_dir}", file=sys.stderr)
+        sys.exit(1)
+    return courses
+
+
+def load_curated_mc(cfg: CourseConfig) -> list[tuple[str, dict]]:
+    items: list[tuple[str, dict]] = []
+    for slug, chapter_items in cfg.curated.items():
         for item in chapter_items:
-            if item["type"] in ("mc", "tf"):
-                items.append(item)
+            if item.get("type") in ("mc", "tf"):
+                items.append((slug, item))
     return items
 
 
@@ -105,7 +109,7 @@ def mc_item_to_note(item: dict, deck: str, tag: str) -> dict:
     return {"deckName": deck, "modelName": MC_MODEL, "fields": fields, "tags": [tag, "mc-interactive"]}
 
 
-def parse_pseudo_mc_note(info: dict) -> dict | None:
+def parse_pseudo_mc_note(info: dict, *, default_deck: str) -> dict | None:
     """Konvertiert bestehende Einfach-Karte mit ☐ Ankreuzen-Format."""
     fields = info["fields"]
     front = fields.get("Vorderseite", {}).get("value", "")
@@ -124,7 +128,7 @@ def parse_pseudo_mc_note(info: dict) -> dict | None:
     distractors = [o.strip() for o in opts if o.strip() != correct]
     shuffled, answers = shuffle_options(correct, distractors, question)
     cids = info.get("cards") or []
-    deck_name = COURSE
+    deck_name = default_deck
     if cids:
         card_info = invoke("cardsInfo", cards=cids[:1])[0]
         deck_name = card_info.get("deckName", deck_name)
@@ -148,16 +152,6 @@ def parse_pseudo_mc_note(info: dict) -> dict | None:
     }
 
 
-def deck_for_tag(tags: list[str]) -> str:
-    if "betriebssysteme::prozesse" in tags:
-        return f"{COURSE}::Prozesse & Threads"
-    if "betriebssysteme::scheduling" in tags:
-        return f"{COURSE}::Scheduling"
-    if "betriebssysteme::synchronisation" in tags:
-        return f"{COURSE}::Synchronisation"
-    return f"{COURSE}::Allgemein"
-
-
 def ensure_mc_model() -> None:
     models = invoke("modelNames")
     if MC_MODEL not in models:
@@ -171,58 +165,141 @@ def ensure_mc_model() -> None:
         sys.exit(2)
 
 
+def collect_curated_notes(cfg: CourseConfig, *, deck_override: str) -> list[dict]:
+    notes: list[dict] = []
+    for slug, item in load_curated_mc(cfg):
+        ch = cfg.chapter_cfg(slug)
+        deck = deck_override or ch.deck
+        notes.append(mc_item_to_note(item, deck, ch.tag))
+    return notes
+
+
+def collect_migrate_notes(cfg: CourseConfig) -> tuple[list[dict], list[int]]:
+    notes: list[dict] = []
+    delete_ids: list[int] = []
+    query = f'deck:"{cfg.deck}" "☐ Ankreuzen"'
+    nids = invoke("findNotes", query=query)
+    for i in range(0, len(nids), 50):
+        for info in invoke("notesInfo", notes=nids[i : i + 50]):
+            converted = parse_pseudo_mc_note(info, default_deck=cfg.deck)
+            if converted:
+                delete_ids.append(converted.pop("_source_nid"))
+                notes.append(converted)
+    return notes, delete_ids
+
+
+def import_notes(notes: list[dict]) -> tuple[int, int]:
+    created = skipped = 0
+    for note in notes:
+        try:
+            result = invoke("addNotes", notes=[note])
+            if result and result[0]:
+                created += 1
+            else:
+                skipped += 1
+        except RuntimeError as e:
+            if "duplicate" in str(e).lower():
+                skipped += 1
+            else:
+                front = note["fields"].get("Question", "")[:60]
+                raise RuntimeError(f"{e} | {front}") from e
+    return created, skipped
+
+
+def process_course(
+    course_dir: Path,
+    *,
+    migrate: bool,
+    deck_override: str,
+    dry_run: bool,
+    delete_pseudo: bool,
+) -> tuple[int, int, int, int]:
+    try:
+        cfg = load_course_config(course_dir)
+    except FileNotFoundError as e:
+        print(e, file=sys.stderr)
+        return 0, 0, 0, 0
+
+    delete_ids: list[int] = []
+    if migrate:
+        notes, delete_ids = collect_migrate_notes(cfg)
+        print(f"{course_dir.name}: Migration – {len(notes)} Pseudo-Karten")
+    else:
+        notes = collect_curated_notes(cfg, deck_override=deck_override)
+        print(f"{course_dir.name}: Kuratiert – {len(notes)} MC/TF-Karten")
+
+    if not notes and not delete_ids:
+        return 0, 0, 0, 0
+
+    if dry_run:
+        for n in notes[:2]:
+            print(f"  [{n['deckName']}] {n['fields']['Question'][:60]}…")
+        if len(notes) > 2:
+            print(f"  … und {len(notes) - 2} weitere")
+        if delete_ids:
+            print(f"  Würde löschen: {len(delete_ids)} Pseudo-Karten")
+        return len(notes), 0, 0, len(delete_ids)
+
+    created, skipped = import_notes(notes)
+    if skipped:
+        print(f"  Übersprungen (Duplikat): {skipped}")
+    deleted = 0
+    if delete_pseudo and delete_ids:
+        invoke("deleteNotes", notes=delete_ids)
+        deleted = len(delete_ids)
+    return len(notes), created, skipped, deleted
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Echte MC-Karten (anki-mc Add-on)")
+    parser = argparse.ArgumentParser(description="Echte MC-Karten (anki-mc Add-on), kursübergreifend")
+    parser.add_argument(
+        "course_dir",
+        nargs="?",
+        type=Path,
+        help='Kursordner mit anki.json, z. B. "lectures/semester4/Compiler"',
+    )
+    parser.add_argument(
+        "--semester",
+        type=Path,
+        help="Alle Kurse unter diesem Ordner (z. B. lectures/semester4)",
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--migrate", action="store_true", help="Bestehende ☐-Pseudo-Karten ersetzen")
-    parser.add_argument("--deck", default="", help="Ziel-Deck (Standard: je nach Tag/Kapitel)")
+    parser.add_argument("--deck", default="", help="Ziel-Deck-Override (nur Kuratiert-Import)")
     parser.add_argument("--delete-pseudo", action="store_true", help="Nach Migration Pseudo-Karten löschen")
     args = parser.parse_args()
+
+    if not args.course_dir and not args.semester:
+        parser.error("course_dir oder --semester angeben")
 
     invoke("version")
     ensure_mc_model()
 
-    notes: list[dict] = []
-    delete_ids: list[int] = []
-
-    if args.migrate:
-        nids = invoke("findNotes", query=f'deck:"{COURSE}" "☐ Ankreuzen"')
-        for i in range(0, len(nids), 50):
-            for info in invoke("notesInfo", notes=nids[i : i + 50]):
-                converted = parse_pseudo_mc_note(info)
-                if converted:
-                    delete_ids.append(converted.pop("_source_nid"))
-                    notes.append(converted)
-        print(f"Migration: {len(notes)} Pseudo-Karten gefunden")
+    if args.semester:
+        course_dirs = discover_courses(args.semester)
     else:
-        tag = "betriebssysteme::allgemein"
-        deck = args.deck or f"{COURSE}::Allgemein"
-        for item in load_curated_mc():
-            note = mc_item_to_note(item, deck, tag)
-            # besseres Deck je Kapitel wäre bei Neuimport aus CURATED-Keys möglich
-            notes.append(note)
-        print(f"Kuratiert: {len(notes)} MC/TF-Karten")
+        course_dirs = [args.course_dir.resolve()]
+
+    total_notes = total_created = total_skipped = total_deleted = 0
+    for course_dir in course_dirs:
+        n, created, skipped, deleted = process_course(
+            course_dir,
+            migrate=args.migrate,
+            deck_override=args.deck,
+            dry_run=args.dry_run,
+            delete_pseudo=args.delete_pseudo,
+        )
+        total_notes += n
+        total_created += created
+        total_skipped += skipped
+        total_deleted += deleted
 
     if args.dry_run:
-        for n in notes[:3]:
-            print(f"  [{n['deckName']}] {n['fields']['Question'][:60]}…")
-            print(f"    Answers: {n['fields']['Answers']}")
-        if len(notes) > 3:
-            print(f"  … und {len(notes) - 3} weitere")
-        if delete_ids:
-            print(f"  Würde löschen: {len(delete_ids)} Pseudo-Karten")
-        return 0
-
-    created = 0
-    batch = 30
-    for i in range(0, len(notes), batch):
-        result = invoke("addNotes", notes=notes[i : i + batch])
-        created += sum(1 for x in result if x)
-    print(f"Importiert: {created}/{len(notes)} echte MC-Karten")
-
-    if args.delete_pseudo and delete_ids:
-        invoke("deleteNotes", notes=delete_ids)
-        print(f"Gelöscht: {len(delete_ids)} Pseudo-Karten")
+        print(f"Gesamt: {total_notes} Karten, {total_deleted} Löschungen (dry-run)")
+    else:
+        print(f"Importiert: {total_created}/{total_notes} echte MC-Karten ({total_skipped} Duplikate)")
+        if total_deleted:
+            print(f"Gelöscht: {total_deleted} Pseudo-Karten")
 
     return 0
 

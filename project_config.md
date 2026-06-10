@@ -23,6 +23,8 @@ anki-workflow/
 │   ├── _template/              # Vorlage für neue Kurse (raw / processed / cards)
 │   └── semester{N}/
 │       └── {Kursname}/
+│           ├── exam.md           # Prüfungsformat & Schwerpunkte (von Cursor gelesen)
+│           ├── anki.json         # Deck/Tags/Kapitel-Konfiguration
 │           ├── raw/              # Rohdaten: PDFs, Scans, Originalbilder (unverändert)
 │           ├── processed/        # Aufbereitete Daten (von Skripten erzeugt)
 │           │   └── {kapitel-slug}/
@@ -46,6 +48,7 @@ anki-workflow/
 | `raw/` | Original-PDFs | Benutzer | **nur** Extraktions-Skripte |
 | `processed/` | Folien, JSON, Bilder, IO-Manifest | Skripte | **Cursor** (Kartenerstellung) |
 | `cards/` | Freigegebene Kartenentwürfe | Cursor | Cursor → MCP Import |
+| `exam.md` | Prüfungsformat, Schwerpunkte, Kartentyp-Hinweise | Benutzer | **Cursor** (vor Kartenerstellung) |
 
 ---
 
@@ -138,13 +141,13 @@ Alternativ kann Cursor dieselben Notizen per `anki_create_notes` anlegen, wenn B
    - **O-Notation** → `Einfach` (umgekehrt) oder Matching
    - **Diagramme, Architekturbilder** → `Image Occlusion Enhanced` (aus `occlusion/manifest.json`)
    - **Formeln** → `Lückentext` oder `Einfach (Antwort eintippen)`
-   - **Vergleiche (TCP vs. UDP)** → MC / True-False
+   - **Vergleiche, Prüfungsfragen, True/False** → MC (Add-on) — siehe Abschnitt MC unten
    - **Aktiver Code** → Type-In
 
 2. **Spezifische Regeln**:
    - Code-Lücken: eine logische Einheit pro Lücke
    - Bildkarten: bevorzugt eingebettete Grafik aus `images/`, sonst Seitenrender
-   - MC: mindestens 4 Optionen, eine richtig
+   - MC: mindestens 4 Optionen, eine richtig; in `anki_curated.json` als `"type": "mc"` mit `distractors`
    - Folienfragen (`questions` in `slides.json`) → bevorzugte Kartenfronten
    - Redundanzen erlaubt über mehrere Kartentypen
 
@@ -155,7 +158,24 @@ Alternativ kann Cursor dieselben Notizen per `anki_create_notes` anlegen, wenn B
 4. **Sprache**:
    - Folien DE → Karten DE; Fachbegriffe EN mit DE-Erklärung
 
-5. **Backup‑Pflicht** (mehr als 5 Karten):
+5. **Multiple Choice (MC)** — Workflow:
+
+   | Stufe | Was | Werkzeug |
+   |-------|-----|----------|
+   | Entwurf | `mc` / `tf` in `cards/anki_curated.json` | Cursor |
+   | Text-Import | Pseudo-MC (`Einfach`, `☐ Ankreuzen:`) | `import_lecture_cards.py` |
+   | MC-Import | Interaktive Karten (`AllInOne (kprim, mc, sc)`) | `import_mc_cards.py` |
+   | Migration | Bestehende Pseudo- → echte MC | `import_mc_cards.py --migrate --delete-pseudo` |
+
+   **Voraussetzung:** Anki-Add-on [1566095810](https://ankiweb.net/shared/info/1566095810) (Multiple Choice), Anki neu starten.
+
+   **Curated-Format `mc`:** `front`, `back` (mit `✓ ` vor der richtigen Antwort), `distractors` (3 falsche Optionen).
+
+   **Curated-Format `tf`:** `front` mit `Stimmt: …`, `back` mit `✓` oder `✗`.
+
+   Pseudo-MC nicht per MCP `anki_create_notes` nachbauen — immer `import_mc_cards.py` für den Notiztyp `AllInOne`.
+
+6. **Backup‑Pflicht** (mehr als 5 Karten):
    ```bash
    cp ~/Library/Application\ Support/Anki2/${ANKI_PROFILE:-User}/collection.anki2 \
       ./backups/collection_$(date +%Y%m%d_%H%M%S).anki2
@@ -168,4 +188,4 @@ Alternativ kann Cursor dieselben Notizen per `anki_create_notes` anlegen, wenn B
 
 Nutzer-Befehle: `docs/commands.md` · Agent/Scratch-Policy: `docs/agents.md`
 
-Neuer Kurs: `_template` kopieren → PDFs nach `raw/` → `batch_extract_course.py` → `anki.json` → `import_lecture_cards.py --import-io`
+Neuer Kurs: `_template` kopieren → `exam.md` ausfüllen → PDFs nach `raw/` → `batch_extract_course.py` → `anki.json` → `import_lecture_cards.py --import-io`
