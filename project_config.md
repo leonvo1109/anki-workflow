@@ -4,7 +4,7 @@
 Aus Vorlesungs-PDFs **strukturierte Lernmaterialien** erzeugen und daraus optimale Karteikarten per MCP in Anki importieren.
 
 ## KI-Rolle
-Du bist ein Lernmethodik-Assistent. Du erstellst Karteikarten nach den Prinzipien der minimalen Information und aktiven Abfrage (SM-2). Du nutzt ausschließlich die MCP-Tools für Anki.
+Du bist ein Lernmethodik-Assistent. Du erstellst Karteikarten nach den Prinzipien der minimalen Information und aktiven Abfrage (FSRS). Du nutzt ausschließlich die MCP-Tools für Anki.
 
 **Verboten für die Karteikartenerstellung:** Roh-PDFs oder unstrukturierte Quellen direkt lesen.  
 **Pflicht:** Nur Dateien unter `processed/` und optional `cards/` verwenden.
@@ -98,7 +98,7 @@ python scripts/classify_images.py "lectures/.../processed/bs-kapitel1-einfuehrun
 ### Phase 3 – Anki-Import (MCP)
 
 1. Backup prüfen/erstellen (s. unten)
-2. `anki_create_notes` für Basic / Cloze / Type-In
+2. `anki_create_notes` für Basic / Cloze / Type-In / Multiple Choice
 3. **Image Occlusion** – siehe Abschnitt IO unten
 4. `workflow_status.md` aktualisieren
 
@@ -147,13 +147,17 @@ Alternativ kann Cursor dieselben Notizen per `anki_create_notes` anlegen, wenn B
 2. **Spezifische Regeln**:
    - Code-Lücken: eine logische Einheit pro Lücke
    - Bildkarten: bevorzugt eingebettete Grafik aus `images/`, sonst Seitenrender
-   - MC: mindestens 4 Optionen, eine richtig; in `anki_curated.json` als `"type": "mc"` mit `distractors`
+   - SC: mindestens 4 Optionen, eine richtig; in `anki_curated.json` als `"type": "sc"` mit `distractors`
+   - MC: mindestens 4 Optionen, mindestens eine richtig in `anki_curated.json`als `"type": "mc"`mit `distractors`
+   - TF: mit Hilfe von Single Choice modellieren, für tiefere Zusammenhänge oder viele TF Fragen auch eventuell KPRIM verwenden
+   - SC/MC/KPRIM/TF: vor allem um Wissen auf anderen Karten nochmal zu Wiederholen und damit zu festigen (nicht als alleinige Quelle für Wissen da nichts richtig "gemerkt" werden muss) und vor allem bei Konzepten mit hoher Verwechslungsgefahr und bekannten Pitfalls
    - Folienfragen (`questions` in `slides.json`) → bevorzugte Kartenfronten
-   - Redundanzen erlaubt über mehrere Kartentypen
+   - Redundanzen erlaubt über mehrere Kartentypen um maximalen Lerneffekt bei genügend Abwechslung zu erzielen (um Gefahr von "Karte auswendig lernen" ohne Verständnis zu vermeiden)
 
 3. **Mengenrichtlinie**:
-   - Pro 10 **Inhaltsfolien** max. 10 Karten
+   - Pro 10 **Inhaltsfolien** max. 10 inhaltlich komplexe Karten (ausgenommen SC/MC/KPRIM/TF)
    - Eine Folie mit 4 Stichpunkten → bis zu 4 Karten, nicht eine Sammelkarte
+   - Bei zentralen/schwierigen Konzepten 1-3 SC/MC/KPRIM/TF Karten hinzufügen
 
 4. **Sprache**:
    - Folien DE → Karten DE; Fachbegriffe EN mit DE-Erklärung
