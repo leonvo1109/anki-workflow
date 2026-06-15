@@ -27,7 +27,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 MC_MODEL = "AllInOne (kprim, mc, sc)"
 META_RE = re.compile(r"exam\.md|klausurrelevant|laut exam|\(exam\)|prüfungsrelevant|workflow_status", re.I)
-KNOWN_TYPES = {"basic", "luecke", "mc", "tf", "sc"}
+KNOWN_TYPES = {"basic", "einfach", "luecke", "mc", "tf", "sc"}
 
 
 def norm(text: str) -> str:
