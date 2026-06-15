@@ -216,10 +216,15 @@ def generate_from_slides(
     for item in cfg.curated.get(chapter, []):
         note = curated_to_note(item, deck, tag)
         front = note["fields"].get("Vorderseite") or note["fields"].get("Text", "")
-        key = norm_key(front)
-        if key in seen:
+        keys = {norm_key(front)}
+        if item.get("type") in ("mc", "tf"):
+            # Bare Frage zusätzlich prüfen: so blockiert eine bereits existierende
+            # interaktive AllInOne-Karte (Question-Feld ohne Präfixe) den Re-Import.
+            bare = re.sub(r"^(☐ Ankreuzen:|Stimmt:)\s*", "", item.get("front", "")).strip()
+            keys.add(norm_key(bare))
+        if keys & seen:
             continue
-        seen.add(key)
+        seen.update(keys)
         notes.append(note)
 
     if not auto_bullets:

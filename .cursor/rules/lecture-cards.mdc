@@ -12,11 +12,13 @@ alwaysApply: false
 - Course import config: sibling `anki.json`; curated cards in `cards/anki_curated.json`
 - IO diagrams: use `occlusion/manifest.json` → `import_io_stubs.py`; do not draw SVG masks via MCP
 - Card quality rules: `project_config.md` (types, density, language)
+- **Keine Meta-Karten**: Karten testen Stoff, nie Klausurorganisation (kein „X ist laut exam.md nicht relevant", keine `(exam)`-Marker im Kartentext)
+- **Lint-Pflicht**: `python scripts/lint_cards.py "{Kurs}"` vor Import, `--live` nach Import
 
 ## Multiple Choice
 
 - Vergleiche, Prüfungsfragen, True/False → `"type": "mc"` oder `"tf"` in `anki_curated.json` (4 Optionen, eine richtig bei `mc`)
 - Nicht manuell `☐ Ankreuzen`-`Einfach`-Karten anlegen — das erzeugt `import_lecture_cards.py` aus `mc`/`tf`-Einträgen
-- Echte interaktive Karten: Add-on `1566095810` + `python scripts/import_mc_cards.py` (nach Text-Import) oder `--migrate` für bestehende Pseudo-Karten
+- Echte interaktive Karten: Add-on `1566095810` + `python scripts/import_mc_cards.py` (nach Text-Import; löscht Einfach-Duplikate inkl. TF automatisch) oder `--migrate` für bestehende Pseudo-Karten
 - Notiztyp: `AllInOne (kprim, mc, sc)` · Single Choice = QType `2`
 - Stack-Säuberung: `anki_cleanup.json` (Löschen/Updates) + `import_mc_cards.py --migrate --delete-pseudo` (MC-Konvertierung)

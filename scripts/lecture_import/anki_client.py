@@ -40,8 +40,14 @@ class AnkiClient:
         except Exception:
             return set()
 
+    def ensure_decks(self, notes: list[dict]) -> None:
+        """Legt fehlende Ziel-Decks an (createDeck ist idempotent)."""
+        for deck in {n["deckName"] for n in notes if n.get("deckName")}:
+            self.invoke("createDeck", deck=deck)
+
     def import_notes(self, notes: list[dict]) -> tuple[int, int]:
         created = skipped = 0
+        self.ensure_decks(notes)
         for note in notes:
             try:
                 result = self.invoke("addNotes", notes=[note])
@@ -58,6 +64,8 @@ class AnkiClient:
         return created, skipped
 
     def run_cleanup(self, cleanup: dict, *, dry_run: bool = False) -> None:
+        # Tolerant gegenüber bereits gelöschten Notizen: cleanup-Dateien bleiben
+        # im Repo liegen und dürfen wiederholte Importe nicht zum Absturz bringen.
         for nid in cleanup.get("delete_note_ids", []):
             if dry_run:
                 print(f"[dry-run] Löschen: {nid}")
@@ -68,12 +76,18 @@ class AnkiClient:
             if dry_run:
                 print(f"[dry-run] Update {upd['id']}")
                 continue
-            fields = upd.get("fields")
-            if fields:
-                self.invoke("updateNoteFields", note={"id": upd["id"], "fields": fields})
-            tags = upd.get("tags")
-            if tags:
-                self.invoke("addTags", notes=[upd["id"]], tags=" ".join(tags))
+            try:
+                fields = upd.get("fields")
+                if fields:
+                    self.invoke("updateNoteFields", note={"id": upd["id"], "fields": fields})
+                tags = upd.get("tags")
+                if tags:
+                    self.invoke("addTags", notes=[upd["id"]], tags=" ".join(tags))
+            except RuntimeError as e:
+                if "not found" in str(e).lower():
+                    print(f"Cleanup-Update übersprungen (Notiz fehlt): {upd['id']}")
+                else:
+                    raise
 
         for nid in cleanup.get("move_to_sync_deck", []):
             deck = cleanup.get("move_deck")

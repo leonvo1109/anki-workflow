@@ -139,7 +139,9 @@ def parse_pseudo_mc_note(info: dict, *, default_deck: str) -> dict | None:
         "QType (0=kprim,1=mc,2=sc)": "2",
         "Answers": answers,
         "Sources": "",
-        "Extra 1": back,
+        # Kein Antwortbuchstabe: Optionen wurden neu gemischt, der alte Buchstabe
+        # aus der Pseudo-Karte wäre falsch.
+        "Extra 1": f"✓ {correct}",
     }
     for i in range(5):
         note_fields[f"Q_{i + 1}"] = shuffled[i] if i < len(shuffled) else ""
@@ -172,6 +174,29 @@ def collect_curated_notes(cfg: CourseConfig, *, deck_override: str) -> list[dict
         deck = deck_override or ch.deck
         notes.append(mc_item_to_note(item, deck, ch.tag))
     return notes
+
+
+def _norm_question(text: str) -> str:
+    t = re.sub(r"^(☐ Ankreuzen:|Stimmt:)\s*", "", text.strip())
+    t = re.sub(r"<[^>]+>", "", t.lower())
+    return " ".join(re.sub(r"[^a-zäöüß0-9]+", " ", t).split())[:100]
+
+
+def find_text_counterparts(cfg: CourseConfig, notes: list[dict]) -> list[int]:
+    """Findet Einfach-Karten (Pseudo-MC ☐ / TF Stimmt:), deren Frage bereits
+    als interaktive Karte importiert wird – sie wären sonst Duplikate."""
+    questions = {_norm_question(n["fields"]["Question"]) for n in notes}
+    nids = invoke("findNotes", query=f'deck:"{cfg.deck}" note:Einfach')
+    matches: list[int] = []
+    for i in range(0, len(nids), 50):
+        for info in invoke("notesInfo", notes=nids[i : i + 50]):
+            front = info["fields"].get("Vorderseite", {}).get("value", "")
+            if not (front.startswith("☐ Ankreuzen") or front.startswith("Stimmt:")):
+                continue
+            first_line = front.splitlines()[0]
+            if _norm_question(first_line) in questions:
+                matches.append(info["noteId"])
+    return matches
 
 
 def collect_migrate_notes(cfg: CourseConfig) -> tuple[list[dict], list[int]]:
@@ -213,6 +238,7 @@ def process_course(
     deck_override: str,
     dry_run: bool,
     delete_pseudo: bool,
+    keep_pseudo: bool = False,
 ) -> tuple[int, int, int, int]:
     try:
         cfg = load_course_config(course_dir)
@@ -227,6 +253,13 @@ def process_course(
     else:
         notes = collect_curated_notes(cfg, deck_override=deck_override)
         print(f"{course_dir.name}: Kuratiert – {len(notes)} MC/TF-Karten")
+        if notes and not keep_pseudo:
+            # Text-Import (Stufe 1) hat dieselben Fragen als Einfach-Karten angelegt
+            # (Pseudo-MC ☐ / TF "Stimmt:") – nach dem interaktiven Import löschen,
+            # sonst bleiben Duplikate zurück.
+            delete_ids = find_text_counterparts(cfg, notes)
+            if delete_ids:
+                print(f"  Text-Duplikate (Pseudo/TF) zum Löschen: {len(delete_ids)}")
 
     if not notes and not delete_ids:
         return 0, 0, 0, 0
@@ -244,7 +277,7 @@ def process_course(
     if skipped:
         print(f"  Übersprungen (Duplikat): {skipped}")
     deleted = 0
-    if delete_pseudo and delete_ids:
+    if delete_ids and (delete_pseudo or not migrate):
         invoke("deleteNotes", notes=delete_ids)
         deleted = len(delete_ids)
     return len(notes), created, skipped, deleted
@@ -267,6 +300,11 @@ def main() -> int:
     parser.add_argument("--migrate", action="store_true", help="Bestehende ☐-Pseudo-Karten ersetzen")
     parser.add_argument("--deck", default="", help="Ziel-Deck-Override (nur Kuratiert-Import)")
     parser.add_argument("--delete-pseudo", action="store_true", help="Nach Migration Pseudo-Karten löschen")
+    parser.add_argument(
+        "--keep-pseudo",
+        action="store_true",
+        help="Kuratiert-Import: Einfach-Duplikate (Pseudo-MC/TF) NICHT automatisch löschen",
+    )
     args = parser.parse_args()
 
     if not args.course_dir and not args.semester:
@@ -288,6 +326,7 @@ def main() -> int:
             deck_override=args.deck,
             dry_run=args.dry_run,
             delete_pseudo=args.delete_pseudo,
+            keep_pseudo=args.keep_pseudo,
         )
         total_notes += n
         total_created += created

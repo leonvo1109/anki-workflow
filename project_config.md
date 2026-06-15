@@ -179,12 +179,22 @@ Alternativ kann Cursor dieselben Notizen per `anki_create_notes` anlegen, wenn B
 
    Pseudo-MC nicht per MCP `anki_create_notes` nachbauen — immer `import_mc_cards.py` für den Notiztyp `AllInOne`.
 
-6. **Backup‑Pflicht** (mehr als 5 Karten):
+6. **Keine Meta-Karten**: Karten testen ausschließlich Stoff. Keine Karten über
+   Klausurorganisation („X ist nicht klausurrelevant"), keine `(exam)`-Marker oder
+   Verweise auf `exam.md` im Kartentext — `exam.md` steuert nur die Auswahl.
+
+7. **Qualitätsprüfung (Pflicht)**:
    ```bash
-   cp ~/Library/Application\ Support/Anki2/${ANKI_PROFILE:-User}/collection.anki2 \
-      ./backups/collection_$(date +%Y%m%d_%H%M%S).anki2
+   python scripts/lint_cards.py "{Kurs}"          # vor dem Import (curated JSON)
+   python scripts/lint_cards.py "{Kurs}" --live   # nach dem Import (Anki-Deck)
    ```
-   Profil: Umgebungsvariable `ANKI_PROFILE` (Standard: `User`).
+
+8. **Backup‑Pflicht** (mehr als 5 Karten):
+   ```bash
+   python scripts/backup_collection.py            # legt Backup an (Profil aus .env)
+   python scripts/backup_collection.py --check    # prüft: Backup ≤1h alt?
+   ```
+   Profil: `ANKI_PROFILE` in `.env` (Standard: `User`).
 
 ---
 

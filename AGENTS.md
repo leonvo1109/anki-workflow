@@ -13,7 +13,7 @@ Anki-Karten aus Vorlesungsfolien. Nutzer-Doku: [README.md](README.md) · Befehle
 - **Cards only from** `lectures/**/processed/` (`slides.json`, `slides.md`) and `lectures/**/cards/`
 - **Never** read `lectures/**/raw/` PDFs for card creation
 - New PDFs → `batch_extract_course.py` first, then cards
-- Anki bulk changes (>5 cards): check/create backup in `backups/` (≤1h old or new)
+- Anki bulk changes (>5 cards): `python scripts/backup_collection.py` (oder `--check` für ≤1h-Prüfung)
 - Log progress in `workflow_status.md`
 
 ## Import & tools
@@ -30,7 +30,9 @@ Anki-Karten aus Vorlesungsfolien. Nutzer-Doku: [README.md](README.md) · Befehle
 **Zwei Stufen:**
 
 1. **Entwurf** in `cards/anki_curated.json` mit `"type": "mc"` oder `"tf"` (nicht direkt als `Einfach` schreiben).
-2. **Import:** zuerst `import_lecture_cards.py` (legt Pseudo-MC als `Einfach` mit `☐ Ankreuzen:` an), dann `import_mc_cards.py` (echte interaktive MC-Karten).
+2. **Import:** zuerst `import_lecture_cards.py` (legt Pseudo-MC als `Einfach` mit `☐ Ankreuzen:` an), dann `import_mc_cards.py` (echte interaktive MC-Karten; **löscht die Einfach-Duplikate aus Stufe 1 automatisch** — auch TF-`Stimmt:`-Karten; Opt-out `--keep-pseudo`).
+
+**Qualität sichern:** vor Import `python scripts/lint_cards.py "{Kurs}"`, nach Import `… --live`. Keine Meta-Karten über Klausurorganisation (z. B. „X ist nicht klausurrelevant") — Karten testen Stoff, `exam.md` steuert nur die Auswahl.
 
 **`mc` in curated** — Pflichtfelder:
 

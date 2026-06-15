@@ -31,9 +31,9 @@ def main() -> int:
         print(f"raw/-Ordner fehlt: {raw_dir}", file=sys.stderr)
         return 1
 
-    pdfs = sorted(raw_dir.glob("*.pdf"))
+    pdfs = sorted(raw_dir.rglob("*.pdf"))
     if not pdfs:
-        print(f"Keine PDFs in {raw_dir}", file=sys.stderr)
+        print(f"Keine PDFs (rekursiv) in {raw_dir}", file=sys.stderr)
         return 1
 
     failed = 0

@@ -41,16 +41,31 @@ Entwurf in `cards/anki_curated.json` als `"type": "mc"` / `"tf"`, dann:
 python scripts/import_lecture_cards.py "{Kurs}"
 
 # 2. Echte MC aus curated (Deck/Tag aus anki.json je Kapitel)
+#    Löscht automatisch die Einfach-Duplikate aus Stufe 1 (Pseudo-MC + TF).
+#    Opt-out: --keep-pseudo
 python scripts/import_mc_cards.py "{Kurs}" --dry-run
 python scripts/import_mc_cards.py "{Kurs}"
 
-# 3. Bestehende Pseudo-MC migrieren (ein Kurs oder ganzes Semester)
+# 3. Bestehende (Alt-)Pseudo-MC migrieren (ein Kurs oder ganzes Semester)
 python scripts/import_mc_cards.py "{Kurs}" --migrate --dry-run
 python scripts/import_mc_cards.py "{Kurs}" --migrate --delete-pseudo
 python scripts/import_mc_cards.py --semester lectures/semester4 --migrate --delete-pseudo
 ```
 
 Notiztyp: `AllInOne (kprim, mc, sc)` · Single Choice = Feld `QType` = `2`.
+
+## Qualitätsprüfung
+
+Vor dem Import (curated JSON) und nach dem Import (Live-Deck) laufen lassen:
+
+```bash
+python scripts/lint_cards.py "{Kurs}"          # nur cards/anki_curated.json
+python scripts/lint_cards.py "{Kurs}" --live   # zusätzlich das Anki-Deck
+```
+
+Findet u. a.: Meta-Karten (Klausurorganisation statt Stoff), doppelte Fronten,
+Einfach-Duplikate interaktiver MC/TF-Karten, Pseudo-MC-Reste, veraltete
+Antwortbuchstaben in `Extra 1`, kaputte MC/TF-Formate.
 
 ## Anki-Styling
 
@@ -69,14 +84,8 @@ Add-on-Typen (Image Occlusion, Multiple Choice) nicht per `push` überschreiben.
 ## Backup
 
 ```bash
-python -c "
-import sys; sys.path.insert(0,'scripts')
-from pathlib import Path; import shutil, datetime
-from anki_paths import collection_db
-dst = Path('backups')/f'collection_{datetime.datetime.now():%Y%m%d_%H%M%S}.anki2'
-dst.parent.mkdir(exist_ok=True)
-shutil.copy2(collection_db(), dst); print(dst)
-"
+python scripts/backup_collection.py            # Backup anlegen (Profil aus .env)
+python scripts/backup_collection.py --check    # Exit 0, wenn Backup ≤1h alt
 
 python scripts/restore_backup.py
 python scripts/restore_backup.py collection_20260101_120000.anki2
@@ -88,12 +97,14 @@ Anki vor `restore_backup.py` schließen.
 
 | Skript | Zweck |
 |--------|--------|
-| `batch_extract_course.py` | Alle PDFs in `raw/` |
+| `batch_extract_course.py` | Alle PDFs in `raw/` (rekursiv) |
 | `extract_lecture.py` | Einzel-PDF |
 | `classify_images.py` | IO-Kandidaten filtern |
 | `import_lecture_cards.py` | Text-Karten aus `slides.json` |
 | `import_io_stubs.py` | IO-Stub-Karten |
 | `import_mc_cards.py` | Multiple-Choice (Add-on) |
+| `lint_cards.py` | Karten-Qualitätsprüfung (curated + Live-Deck) |
+| `backup_collection.py` | Backup anlegen / Aktualität prüfen |
 | `sync_anki_style.py` | `_global_style.css` ↔ Anki |
 | `sync_anki_note_types.py` | Notiztyp-Vorlagen ↔ Anki |
 | `restore_backup.py` | Backup einspielen |
