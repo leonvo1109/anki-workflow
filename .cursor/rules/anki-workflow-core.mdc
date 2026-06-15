@@ -14,3 +14,4 @@ Read `AGENTS.md` and `workflow_status.md` before bulk work.
 - Permanent scripts in `scripts/`; ephemeral helpers in `scripts/_scratch/`
 - Update `workflow_status.md` after extraction, import, or backup
 - MC/TF: `anki_curated.json` (`type: mc|tf`) → `import_lecture_cards.py` → `import_mc_cards.py` (Add-on 1566095810); details in `AGENTS.md`
+- Manuelle Kartenüberarbeitung: `wf::lock` in Anki → `process_session_tags.py --sync-locks`; Session-Feedback über `wf::fix::*`

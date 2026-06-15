@@ -27,7 +27,7 @@ class AnkiClient:
         self.invoke("version")
 
     def load_existing_keys(self, deck: str) -> set[str]:
-        from .generator import norm_key
+        from .norm import norm_key
 
         try:
             nids = self.invoke("findNotes", query=f'deck:"{deck}"')
@@ -63,16 +63,23 @@ class AnkiClient:
                     raise RuntimeError(f"{e} | {front[:60]}") from e
         return created, skipped
 
-    def run_cleanup(self, cleanup: dict, *, dry_run: bool = False) -> None:
+    def run_cleanup(self, cleanup: dict, *, dry_run: bool = False, locked_note_ids: set[int] | None = None) -> None:
         # Tolerant gegenüber bereits gelöschten Notizen: cleanup-Dateien bleiben
         # im Repo liegen und dürfen wiederholte Importe nicht zum Absturz bringen.
+        locked = locked_note_ids or set()
         for nid in cleanup.get("delete_note_ids", []):
+            if nid in locked:
+                print(f"Cleanup-Löschen übersprungen (gesperrt): {nid}")
+                continue
             if dry_run:
                 print(f"[dry-run] Löschen: {nid}")
             else:
                 self.invoke("deleteNotes", notes=[nid])
 
         for upd in cleanup.get("updates", []):
+            if upd.get("id") in locked:
+                print(f"Cleanup-Update übersprungen (gesperrt): {upd['id']}")
+                continue
             if dry_run:
                 print(f"[dry-run] Update {upd['id']}")
                 continue

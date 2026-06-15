@@ -25,9 +25,13 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
 
-MC_MODEL = "AllInOne (kprim, mc, sc)"
-META_RE = re.compile(r"exam\.md|klausurrelevant|laut exam|\(exam\)|prüfungsrelevant|workflow_status", re.I)
-KNOWN_TYPES = {"basic", "einfach", "luecke", "mc", "tf", "sc"}
+from lecture_import.locks import (
+    keys_for_curated_item,
+    load_locks,
+    merge_curated_locks,
+    snapshot_from_curated_item,
+    is_curated_item_locked,
+)
 
 
 def norm(text: str) -> str:
@@ -93,6 +97,36 @@ def lint_curated(course_dir: Path) -> list[str]:
                     issues.append(f"{where}: tf front muss mit 'Stimmt:' beginnen")
                 if not (back.startswith("✓") or back.startswith("✗")):
                     issues.append(f"{where}: tf back muss mit ✓ oder ✗ beginnen")
+    return issues
+
+
+def lint_locked(course_dir: Path) -> list[str]:
+    issues: list[str] = []
+    cards_dir = course_dir / "cards"
+    curated_path = cards_dir / "anki_curated.json"
+    curated: dict = {}
+    if curated_path.exists():
+        curated = json.loads(curated_path.read_text(encoding="utf-8"))
+    registry = merge_curated_locks(curated, load_locks(cards_dir))
+    if not registry.entries:
+        return issues
+
+    for entry in registry.entries:
+        if not entry.snapshot or not entry.chapter:
+            continue
+        items = curated.get(entry.chapter, [])
+        for idx, item in enumerate(items):
+            if not any(k in keys_for_curated_item(item) for k in entry.match_keys):
+                continue
+            if is_curated_item_locked(item, registry):
+                snap = snapshot_from_curated_item(item)
+                for key in ("front", "back", "text"):
+                    if key in entry.snapshot and snap.get(key) != entry.snapshot.get(key):
+                        issues.append(
+                            f"LOCK-DRIFT {entry.chapter}[{idx}] ({entry.id}): "
+                            f"curated.{key} weicht vom gesperrten Snapshot ab"
+                        )
+                break
     return issues
 
 
@@ -162,7 +196,7 @@ def main() -> int:
     args = parser.parse_args()
 
     course_dir = args.course_dir.resolve()
-    issues = lint_curated(course_dir)
+    issues = lint_curated(course_dir) + lint_locked(course_dir)
     label = "curated"
     if args.live:
         issues += lint_live(course_dir)

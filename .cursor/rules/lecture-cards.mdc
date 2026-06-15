@@ -9,7 +9,10 @@ alwaysApply: false
 - Read sibling `exam.md` before creating or curating cards (exam format, focus topics, exclusions)
 - Primary source: `processed/{kapitel}/slides.json` (not PDFs in `raw/`)
 - Skip slides with `"organizational": true`
-- Course import config: sibling `anki.json`; curated cards in `cards/anki_curated.json`
+- Course import config: sibling `anki.json` (Deck-Hierarchie); curated in `cards/anki_curated.json`
+- **Keine Kapitel-Tags** — Struktur nur über Subdecks; Workflow über `wf::…`-Tags
+- **Session:** Nutzer taggt in Anki → `process_session_tags.py` → `session_queue.json` lesen und abarbeiten
+- **Gesperrt:** `wf::lock` / `anki_locked.json` — nicht überschreiben
 - IO diagrams: use `occlusion/manifest.json` → `import_io_stubs.py`; do not draw SVG masks via MCP
 - Card quality rules: `project_config.md` (types, density, language)
 - **Keine Meta-Karten**: Karten testen Stoff, nie Klausurorganisation (kein „X ist laut exam.md nicht relevant", keine `(exam)`-Marker im Kartentext)

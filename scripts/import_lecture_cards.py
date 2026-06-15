@@ -82,14 +82,16 @@ def main() -> int:
             print(f"AnkiConnect nicht erreichbar: {e}", file=sys.stderr)
             return 1
 
+    locked_note_ids = {e.note_id for e in cfg.locks.entries if e.note_id is not None}
     if not args.skip_cleanup and cfg.cleanup:
-        client.run_cleanup(cfg.cleanup, dry_run=args.dry_run)
+        client.run_cleanup(cfg.cleanup, dry_run=args.dry_run, locked_note_ids=locked_note_ids)
         if cfg.cleanup.get("updates") and not args.dry_run:
             print(f"Aktualisiert: {len(cfg.cleanup['updates'])} Notizen")
 
     seen: set[str] = set()
     if not args.dry_run:
         seen = client.load_existing_keys(cfg.deck)
+        seen.update(cfg.locks.all_keys)
         print(f"Bereits in Anki (Dedup): {len(seen)} Fronten")
 
     all_notes: list[dict] = []
@@ -110,7 +112,7 @@ def main() -> int:
 
         slides = json.loads(slides_path.read_text(encoding="utf-8"))
         notes = generate_from_slides(
-            slides, ch.deck, ch.tag, slug, seen, cfg, auto_bullets=auto,
+            slides, ch.deck, slug, seen, cfg, auto_bullets=auto,
         )
         print(f"{slug}: {len(notes)} Karten")
         all_notes.extend(notes)
@@ -121,7 +123,7 @@ def main() -> int:
         for n in all_notes[:5]:
             f = n["fields"]
             front = f.get("Vorderseite") or f.get("Text", "")[:60]
-            print(f"  [{n.get('tags', ['?'])[0]}] {front}…")
+            print(f"  [{n['deckName']}] {front}…")
         if len(all_notes) > 5:
             print(f"  … und {len(all_notes) - 5} weitere")
     elif all_notes:

@@ -1,7 +1,11 @@
 {
   "deck": "4. Semester::Mein Kurs",
-  "tag_prefix": "meinkurs",
   "parse_body_bullets": false,
   "max_per_slide": 2,
-  "chapters": {}
+  "chapters": {
+    "beispiel-kapitel": {
+      "deck_suffix": "Beispiel Kapitel",
+      "auto_mode": "full"
+    }
+  }
 }

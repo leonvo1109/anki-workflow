@@ -20,7 +20,9 @@ Bild-Klassifikation: macOS + Apple Vision. Extraktion überall mit `pymupdf`.
 
 ## Karten importieren
 
-Pro Kurs: `anki.json` (Deck/Tags), optional `cards/anki_curated.json` und `cards/anki_cleanup.json`.
+Pro Kurs: `anki.json` (Deck-Hierarchie), optional `cards/anki_curated.json`, `anki_cleanup.json`, `anki_locked.json`.
+
+**Keine Kapitel-Tags mehr** — Zuordnung läuft über Subdecks (`deck_suffix` in `anki.json`). Tags nur für Workflow (`wf::…`) und Pipeline (`mc-interactive`, `io-stub`).
 
 ```bash
 python scripts/import_lecture_cards.py "{Kurs}" --dry-run
@@ -40,7 +42,7 @@ Entwurf in `cards/anki_curated.json` als `"type": "mc"` / `"tf"`, dann:
 # 1. Text-Karten inkl. Pseudo-MC (Einfach mit ☐ Ankreuzen)
 python scripts/import_lecture_cards.py "{Kurs}"
 
-# 2. Echte MC aus curated (Deck/Tag aus anki.json je Kapitel)
+# 2. Echte MC aus curated (Deck aus anki.json je Kapitel)
 #    Löscht automatisch die Einfach-Duplikate aus Stufe 1 (Pseudo-MC + TF).
 #    Opt-out: --keep-pseudo
 python scripts/import_mc_cards.py "{Kurs}" --dry-run
@@ -65,7 +67,63 @@ python scripts/lint_cards.py "{Kurs}" --live   # zusätzlich das Anki-Deck
 
 Findet u. a.: Meta-Karten (Klausurorganisation statt Stoff), doppelte Fronten,
 Einfach-Duplikate interaktiver MC/TF-Karten, Pseudo-MC-Reste, veraltete
-Antwortbuchstaben in `Extra 1`, kaputte MC/TF-Formate.
+Antwortbuchstaben in `Extra 1`, kaputte MC/TF-Formate, Abweichungen gesperrter Karten.
+
+## Lern-Session (Workflow-Tags)
+
+Tags mit Prefix `wf::` — Kommunikation während/nach dem Lernen **ohne Notiz-IDs**.
+
+```bash
+# Verfügbare Tags anzeigen
+python scripts/process_session_tags.py --list-tags
+
+# Nach der Lern-Session: Queue für die KI erzeugen
+python scripts/process_session_tags.py "{Kurs}"
+
+# wf::lock → Sperrliste (Import überschreibt nicht)
+python scripts/process_session_tags.py "{Kurs}" --sync-locks
+
+# Nach KI-Arbeit: Fix-Tags entfernen, wf::done setzen
+python scripts/process_session_tags.py "{Kurs}" --complete
+```
+
+| Tag | Bedeutung |
+|-----|-----------|
+| `wf::fix::unclear` | Frage unklar |
+| `wf::fix::answer` | Antwort falsch/unvollständig |
+| `wf::fix::typo` | Tippfehler |
+| `wf::fix::distractor` | MC-Distraktor prüfen |
+| `wf::fix::split` | Karte aufteilen |
+| `wf::fix::merge` | Redundant |
+| `wf::fix::type` | Falscher Kartentyp |
+| `wf::fix::image` | Bild/IO-Problem |
+| `wf::lock` | Manuell bearbeitet — nicht überschreiben |
+| `wf::done` | Von KI erledigt (wird bei `--complete` gesetzt) |
+
+Ausgabe: `cards/session_queue.json` — im Chat: „Session-Tags auswerten“.
+
+## Manuell überarbeitete Karten sperren (Alternativ)
+
+Bevorzugt `wf::lock` in Anki + `--sync-locks`. Sonst:
+
+```bash
+# Anki-Notiz-ID sperren (Notiz-ID: Rechtsklick → ID kopieren, oder Browser)
+python scripts/mark_manual_cards.py "{Kurs}" --note-id 1234567890 --comment "Antwort gekürzt"
+
+# Kuratierten JSON-Eintrag sperren (Kapitel + 0-basierter Index)
+python scripts/mark_manual_cards.py "{Kurs}" --curated kapitel-slug 2
+
+# Gesperrte Karten anzeigen
+python scripts/mark_manual_cards.py "{Kurs}" --list
+
+# Anki-Stand gesperrter Karten nach anki_curated.json zurückschreiben
+python scripts/mark_manual_cards.py "{Kurs}" --sync-curated
+
+# Sperre aufheben (Lock-ID oder note-id)
+python scripts/mark_manual_cards.py "{Kurs}" --unlock 1234567890
+```
+
+Gesperrte Karten werden beim Import nicht neu erzeugt; Cleanup-Updates/Löschungen für diese Notiz-IDs werden übersprungen. Die KI darf gesperrte `anki_curated.json`-Einträge nicht überschreiben.
 
 ## Anki-Styling
 
@@ -104,6 +162,8 @@ Anki vor `restore_backup.py` schließen.
 | `import_io_stubs.py` | IO-Stub-Karten |
 | `import_mc_cards.py` | Multiple-Choice (Add-on) |
 | `lint_cards.py` | Karten-Qualitätsprüfung (curated + Live-Deck) |
+| `process_session_tags.py` | Session-Tags auswerten (`wf::…` → `session_queue.json`) |
+| `mark_manual_cards.py` | Sperrliste pflegen (`anki_locked.json`, Fallback) |
 | `backup_collection.py` | Backup anlegen / Aktualität prüfen |
 | `sync_anki_style.py` | `_global_style.css` ↔ Anki |
 | `sync_anki_note_types.py` | Notiztyp-Vorlagen ↔ Anki |

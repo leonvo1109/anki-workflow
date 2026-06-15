@@ -5,12 +5,13 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .locks import LockRegistry, load_locks, merge_curated_locks
+
 
 @dataclass
 class ChapterConfig:
     slug: str
     deck: str
-    tag: str
     auto_mode: str = "full"  # full | curated-only | skip
 
 
@@ -25,6 +26,7 @@ class CourseConfig:
     chapters: dict[str, ChapterConfig] = field(default_factory=dict)
     curated: dict[str, list[dict]] = field(default_factory=dict)
     cleanup: dict = field(default_factory=dict)
+    locks: LockRegistry = field(default_factory=LockRegistry)
 
     @property
     def processed_dir(self) -> Path:
@@ -46,8 +48,7 @@ class CourseConfig:
     def chapter_cfg(self, slug: str) -> ChapterConfig:
         if slug in self.chapters:
             return self.chapters[slug]
-        tag = f"{self.tag_prefix}::{slug}" if self.tag_prefix else slug
-        return ChapterConfig(slug=slug, deck=self.deck, tag=tag)
+        return ChapterConfig(slug=slug, deck=self.deck)
 
 
 def load_course_config(course_dir: Path) -> CourseConfig:
@@ -68,12 +69,9 @@ def load_course_config(course_dir: Path) -> CourseConfig:
         ch_deck = ch.get("deck") or deck
         if ch.get("deck_suffix"):
             ch_deck = f"{deck}::{ch['deck_suffix']}"
-        tag_suffix = ch.get("tag") or slug
-        tag = tag_suffix if "::" in tag_suffix else (f"{tag_prefix}::{tag_suffix}" if tag_prefix else tag_suffix)
         chapters[slug] = ChapterConfig(
             slug=slug,
             deck=ch_deck,
-            tag=tag,
             auto_mode=ch.get("auto_mode", "full"),
         )
 
@@ -88,6 +86,8 @@ def load_course_config(course_dir: Path) -> CourseConfig:
     if cleanup_path.exists():
         cleanup = json.loads(cleanup_path.read_text(encoding="utf-8"))
 
+    locks = merge_curated_locks(curated, load_locks(cards_dir))
+
     return CourseConfig(
         course_dir=course_dir,
         deck=deck,
@@ -98,4 +98,5 @@ def load_course_config(course_dir: Path) -> CourseConfig:
         chapters=chapters,
         curated=curated,
         cleanup=cleanup,
+        locks=locks,
     )

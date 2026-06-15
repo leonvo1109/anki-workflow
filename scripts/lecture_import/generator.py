@@ -5,6 +5,9 @@ import random
 import re
 from typing import TYPE_CHECKING
 
+from .norm import norm_key
+from .locks import effective_curated_item, is_curated_item_locked
+
 if TYPE_CHECKING:
     from .config import CourseConfig
 
@@ -38,12 +41,6 @@ def _compile_filters(cfg: CourseConfig) -> dict[str, re.Pattern]:
         "skip_bullet": re.compile(f.get("skip_bullet", DEFAULT_SKIP_BULLET), re.I),
         "low_quality": re.compile(f.get("low_quality", DEFAULT_LOW_QUALITY), re.I),
     }
-
-
-def norm_key(text: str) -> str:
-    t = re.sub(r"<[^>]+>", "", text.lower())
-    t = re.sub(r"[^a-zäöüß0-9]+", " ", t)
-    return " ".join(t.split())[:100]
 
 
 def body_to_bullets(slide: dict, skip_body: re.Pattern) -> list[str]:
@@ -132,17 +129,16 @@ def make_mc_card(front: str, back: str, distractors: list[str]) -> dict:
     }
 
 
-def curated_to_note(item: dict, deck: str, tag: str) -> dict:
+def curated_to_note(item: dict, deck: str) -> dict:
     if item["type"] == "luecke":
-        return {"deckName": deck, "modelName": "Lückentext", "fields": {"Text": item["text"], "Rückseite Extra": ""}, "tags": [tag]}
+        return {"deckName": deck, "modelName": "Lückentext", "fields": {"Text": item["text"], "Rückseite Extra": ""}}
     if item["type"] == "mc":
         base = make_mc_card(item["front"], item["back"], item.get("distractors", []))
         base["deckName"] = deck
-        base["tags"] = [tag]
         return base
     if item["type"] == "tf":
-        return {"deckName": deck, "modelName": "Einfach", "fields": {"Vorderseite": item["front"], "Rückseite": item["back"]}, "tags": [tag]}
-    return {"deckName": deck, "modelName": "Einfach", "fields": {"Vorderseite": item["front"], "Rückseite": item["back"]}, "tags": [tag]}
+        return {"deckName": deck, "modelName": "Einfach", "fields": {"Vorderseite": item["front"], "Rückseite": item["back"]}}
+    return {"deckName": deck, "modelName": "Einfach", "fields": {"Vorderseite": item["front"], "Rückseite": item["back"]}}
 
 
 def is_low_quality(front: str, back: str, filters: dict[str, re.Pattern]) -> bool:
@@ -168,7 +164,7 @@ def is_low_quality(front: str, back: str, filters: dict[str, re.Pattern]) -> boo
     return False
 
 
-def _try_cloze(bullet: str, title: str, deck: str, tag: str, cfg: CourseConfig) -> dict | None:
+def _try_cloze(bullet: str, title: str, deck: str, cfg: CourseConfig) -> dict | None:
     patterns = cfg.filters.get("cloze_patterns") or []
     if cfg.parse_body_bullets:
         patterns = list(patterns) + [r"\b(add|sub|slt|beq|bne|jal|jalr|lw|sw)\s+"]
@@ -193,7 +189,6 @@ def _try_cloze(bullet: str, title: str, deck: str, tag: str, cfg: CourseConfig) 
                 "deckName": deck,
                 "modelName": "Lückentext",
                 "fields": {"Text": f"<i>{title[:30]}</i><br>{cloze}", "Rückseite Extra": ""},
-                "tags": [tag],
             }
     return None
 
@@ -201,7 +196,6 @@ def _try_cloze(bullet: str, title: str, deck: str, tag: str, cfg: CourseConfig) 
 def generate_from_slides(
     slides: list[dict],
     deck: str,
-    tag: str,
     chapter: str,
     seen: set[str],
     cfg: CourseConfig,
@@ -214,7 +208,9 @@ def generate_from_slides(
     notes: list[dict] = []
 
     for item in cfg.curated.get(chapter, []):
-        note = curated_to_note(item, deck, tag)
+        if is_curated_item_locked(item, cfg.locks):
+            item = effective_curated_item(item, cfg.locks)
+        note = curated_to_note(item, deck)
         front = note["fields"].get("Vorderseite") or note["fields"].get("Text", "")
         keys = {norm_key(front)}
         if item.get("type") in ("mc", "tf"):
@@ -231,6 +227,7 @@ def generate_from_slides(
         return notes
 
     default_prefix = cfg.tag_prefix or "Folie"
+    locked_keys = cfg.locks.all_keys
     for slide in slides:
         if is_skip_slide(slide, filters, parse_body=cfg.parse_body_bullets):
             continue
@@ -251,7 +248,7 @@ def generate_from_slides(
             if not q.endswith("?"):
                 q = q + "?"
             key = norm_key(q)
-            if key in seen:
+            if key in seen or key in locked_keys:
                 continue
             seen.add(key)
             back = "; ".join(bullets[:2]) if bullets else title
@@ -261,7 +258,6 @@ def generate_from_slides(
                 "deckName": deck,
                 "modelName": "Einfach",
                 "fields": {"Vorderseite": q[:120], "Rückseite": back[:280]},
-                "tags": [tag],
             })
             added += 1
 
@@ -270,13 +266,13 @@ def generate_from_slides(
                 break
             front = bullet_to_question(title, bullet, default_prefix)
             key = norm_key(front)
-            if key in seen:
+            if key in seen or key in locked_keys:
                 continue
             back = bullet_to_answer(bullet, bullets[i + 1] if i + 1 < len(bullets) else None, filters)
             if is_low_quality(front, back, filters):
                 continue
             seen.add(key)
-            cloze_note = _try_cloze(bullet, title, deck, tag, cfg)
+            cloze_note = _try_cloze(bullet, title, deck, cfg)
             if cloze_note:
                 notes.append(cloze_note)
                 added += 1
@@ -285,7 +281,6 @@ def generate_from_slides(
                 "deckName": deck,
                 "modelName": "Einfach",
                 "fields": {"Vorderseite": front[:110], "Rückseite": back[:220]},
-                "tags": [tag],
             })
             added += 1
 

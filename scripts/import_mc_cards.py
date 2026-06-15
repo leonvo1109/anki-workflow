@@ -30,6 +30,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
 
 from lecture_import.config import CourseConfig, load_course_config
+from lecture_import.locks import effective_curated_item, is_curated_item_locked
 
 
 def invoke(action: str, **params):
@@ -57,8 +58,11 @@ def load_curated_mc(cfg: CourseConfig) -> list[tuple[str, dict]]:
     items: list[tuple[str, dict]] = []
     for slug, chapter_items in cfg.curated.items():
         for item in chapter_items:
-            if item.get("type") in ("mc", "tf"):
-                items.append((slug, item))
+            if item.get("type") not in ("mc", "tf"):
+                continue
+            if is_curated_item_locked(item, cfg.locks):
+                item = effective_curated_item(item, cfg.locks)
+            items.append((slug, item))
     return items
 
 
@@ -70,7 +74,7 @@ def shuffle_options(correct: str, distractors: list[str], seed: str) -> tuple[li
     return opts, answers
 
 
-def mc_item_to_note(item: dict, deck: str, tag: str) -> dict:
+def mc_item_to_note(item: dict, deck: str) -> dict:
     if item["type"] == "tf":
         front = item["front"].replace("Stimmt: ", "").strip()
         is_true = item["back"].startswith("✓")
@@ -90,7 +94,7 @@ def mc_item_to_note(item: dict, deck: str, tag: str) -> dict:
                 "Sources": "",
                 "Extra 1": item["back"],
             },
-            "tags": [tag, "mc-interactive"],
+            "tags": ["mc-interactive"],
         }
 
     correct = item["back"].replace("✓ ", "").strip()
@@ -106,7 +110,7 @@ def mc_item_to_note(item: dict, deck: str, tag: str) -> dict:
     }
     for i in range(5):
         fields[f"Q_{i + 1}"] = opts[i] if i < len(opts) else ""
-    return {"deckName": deck, "modelName": MC_MODEL, "fields": fields, "tags": [tag, "mc-interactive"]}
+    return {"deckName": deck, "modelName": MC_MODEL, "fields": fields, "tags": ["mc-interactive"]}
 
 
 def parse_pseudo_mc_note(info: dict, *, default_deck: str) -> dict | None:
@@ -149,7 +153,7 @@ def parse_pseudo_mc_note(info: dict, *, default_deck: str) -> dict | None:
         "deckName": deck_name,
         "modelName": MC_MODEL,
         "fields": note_fields,
-        "tags": list(info.get("tags", [])) + ["mc-interactive"],
+        "tags": ["mc-interactive"],
         "_source_nid": info["noteId"],
     }
 
@@ -172,7 +176,7 @@ def collect_curated_notes(cfg: CourseConfig, *, deck_override: str) -> list[dict
     for slug, item in load_curated_mc(cfg):
         ch = cfg.chapter_cfg(slug)
         deck = deck_override or ch.deck
-        notes.append(mc_item_to_note(item, deck, ch.tag))
+        notes.append(mc_item_to_note(item, deck))
     return notes
 
 
@@ -185,11 +189,14 @@ def _norm_question(text: str) -> str:
 def find_text_counterparts(cfg: CourseConfig, notes: list[dict]) -> list[int]:
     """Findet Einfach-Karten (Pseudo-MC ☐ / TF Stimmt:), deren Frage bereits
     als interaktive Karte importiert wird – sie wären sonst Duplikate."""
+    locked = {e.note_id for e in cfg.locks.entries if e.note_id is not None}
     questions = {_norm_question(n["fields"]["Question"]) for n in notes}
     nids = invoke("findNotes", query=f'deck:"{cfg.deck}" note:Einfach')
     matches: list[int] = []
     for i in range(0, len(nids), 50):
         for info in invoke("notesInfo", notes=nids[i : i + 50]):
+            if info["noteId"] in locked:
+                continue
             front = info["fields"].get("Vorderseite", {}).get("value", "")
             if not (front.startswith("☐ Ankreuzen") or front.startswith("Stimmt:")):
                 continue

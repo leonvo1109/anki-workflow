@@ -16,9 +16,26 @@ Anki-Karten aus Vorlesungsfolien. Nutzer-Doku: [README.md](README.md) · Befehle
 - Anki bulk changes (>5 cards): `python scripts/backup_collection.py` (oder `--check` für ≤1h-Prüfung)
 - Log progress in `workflow_status.md`
 
+## Lern-Session (Workflow-Tags)
+
+**Struktur:** Kapitel = **Deck-Hierarchie** (`anki.json` → `deck_suffix`). Tags nur für **Workflow**, nicht für Kapitel.
+
+**Während des Lernens** (in Anki, Strg+T):
+- Problem markieren: `wf::fix::unclear`, `wf::fix::answer`, `wf::fix::typo`, … (`python scripts/process_session_tags.py --list-tags`)
+- Selbst korrigiert / nicht überschreiben: `wf::lock`
+- Dann **Easy** (Karte verschwindet aus der Session)
+
+**Nach der Session** (Nutzer im Chat: „Session-Tags auswerten"):
+1. `python scripts/process_session_tags.py "{Kurs}"` → `cards/session_queue.json`
+2. `python scripts/process_session_tags.py "{Kurs}" --sync-locks` (wf::lock → `anki_locked.json`)
+3. Queue abarbeiten: curated/Anki anpassen, gesperrte Karten respektieren
+4. `python scripts/process_session_tags.py "{Kurs}" --complete` (fix-Tags entfernen, `wf::done` setzen)
+
+**Sperrliste:** `cards/anki_locked.json` + `wf::lock` — gesperrte Einträge in `anki_curated.json` **nicht** ändern.
+
 ## Import & tools
 
-- Course config: `lectures/.../{Kurs}/anki.json`
+- Course config: `lectures/.../{Kurs}/anki.json` (Deck-Hierarchie, keine Kapitel-Tags)
 - Curated/cleanup: `cards/anki_curated.json`, `cards/anki_cleanup.json`
 - Import: `python scripts/import_lecture_cards.py "{Kurs}"` or MCP `user-anki`
 - IO stubs: `import_io_stubs.py --course`; masks only in Anki Desktop manually

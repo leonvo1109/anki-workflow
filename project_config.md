@@ -36,6 +36,8 @@ anki-workflow/
 │           │       └── occlusion/
 │           │           └── manifest.json   # IO-Kandidaten
 │           └── cards/            # Kartenentwürfe vor Anki-Import (optional)
+│               ├── anki_curated.json
+│               ├── anki_locked.json   # manuell gesperrte Karten
 │               └── {kapitel}-draft.md
 ├── project_config.md
 └── workflow_status.md
@@ -195,6 +197,18 @@ Alternativ kann Cursor dieselben Notizen per `anki_create_notes` anlegen, wenn B
    python scripts/backup_collection.py --check    # prüft: Backup ≤1h alt?
    ```
    Profil: `ANKI_PROFILE` in `.env` (Standard: `User`).
+
+9. **Lern-Session (Workflow-Tags)** — Kapitel über **Decks**, Feedback über **Tags** (`wf::`):
+
+   | Phase | Aktion |
+   |-------|--------|
+   | Lernen | In Anki `wf::fix::*` oder `wf::lock` setzen, dann Easy |
+   | Danach | `process_session_tags.py "{Kurs}"` → `session_queue.json` |
+   | KI | Queue lesen, Fixes umsetzen, `--sync-locks`, `--complete` |
+
+   Keine Kapitel-Tags (`tag_prefix::slug`) mehr — das spiegelt die Deck-Hierarchie nur redundant.
+
+10. **Manuell gesperrte Karten** — `wf::lock` + `--sync-locks`, oder `anki_locked.json`. Gesperrte curated-Einträge nicht ändern.
 
 ---
 
