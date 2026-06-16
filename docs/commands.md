@@ -143,11 +143,22 @@ Add-on-Typen (Image Occlusion, Multiple Choice) nicht per `push` überschreiben.
 
 ```bash
 python scripts/backup_collection.py            # Backup anlegen (Profil aus .env)
+python scripts/backup_collection.py --with-media
+python scripts/backup_collection.py --with-profile
+python scripts/backup_collection.py --auto      # faellige Backups nach Hierarchie
 python scripts/backup_collection.py --check    # Exit 0, wenn Backup ≤1h alt
+python scripts/backup_collection.py --check --with-media
+python scripts/backup_collection.py --check --with-profile
 
 python scripts/restore_backup.py
 python scripts/restore_backup.py collection_20260101_120000.anki2
 ```
+
+Empfohlene Hierarchie:
+- Vor Bulk-Imports: `python scripts/backup_collection.py --with-media`
+- Regelmäßig (z. B. täglich): `python scripts/backup_collection.py --with-profile`
+- Automatisch nach Alter: `python scripts/backup_collection.py --auto`
+  (DB/Media ab 1h, Profil ab 24h)
 
 Anki vor `restore_backup.py` schließen.
 
