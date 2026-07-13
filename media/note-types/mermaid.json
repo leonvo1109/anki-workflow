@@ -1,0 +1,16 @@
+{
+  "name": "Mermaid",
+  "type": "standard",
+  "managed_by_addon": false,
+  "fields": [
+    "Vorderseite",
+    "Rückseite"
+  ],
+  "css": "@import url(\"_global_style.css\");\n",
+  "templates": {
+    "Karte 1": {
+      "Front": "<div class=\"card-box\">\n\n{{Vorderseite}}\n\n</div>",
+      "Back": "<div class=\"card-box\">\n\n{{Vorderseite}}\n\n<hr id=answer>\n\n{{Rückseite}}\n\n</div>"
+    }
+  }
+}

@@ -33,6 +33,12 @@ from lecture_import.locks import (
     is_curated_item_locked,
 )
 
+KNOWN_TYPES = {"basic", "mc", "sc", "tf", "luecke"}
+META_RE = re.compile(
+    r"(nicht klausurrelevant|laut exam\.md|klausurrelevant|exam\.md|nicht:\s)",
+    re.I,
+)
+MC_MODEL = "AllInOne (kprim, mc, sc)"
 
 def norm(text: str) -> str:
     t = re.sub(r"^(☐ Ankreuzen:|Stimmt:)\s*", "", text.strip())

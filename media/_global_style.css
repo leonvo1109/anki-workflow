@@ -1,146 +1,201 @@
 /*
  * Anki global card styling – bearbeiten in diesem Repo, dann syncen:
  *   python scripts/sync_anki_style.py push
+ *   python scripts/sync_anki_note_types.py push
  *
- * In Notizvorlagen eingebunden via:
- *   @import url("_global_style.css");
- *
- * Füge dein CSS unten ein (ersetzt diesen Platzhalter).
+ * In Notizvorlagen: @import url("_global_style.css");
  */
 
- /* =======================================================
-   1. STANDARD-MODUS (Heller Modus für Desktop & Web)
+/* =======================================================
+   1. STANDARD (hell)
    ======================================================= */
-.card { 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-    font-size: 20px; 
-    line-height: 1.5; 
-    text-align: left; 
-    color: #2c3e50; 
-    background-color: #f5f6fa; 
-    letter-spacing: 0.5px; 
-  } 
-  
-  .card-box { 
-    background-color: #ffffff; 
-    border-radius: 12px; 
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); 
-    padding: 30px; 
-    max-width: 500px; 
-    margin: 40px auto; 
-  } 
-  
-  body { 
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+.card {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 20px;
+  line-height: 1.5;
+  text-align: left;
+  color: #2c3e50;
+  background-color: #f5f6fa;
+  letter-spacing: 0.5px;
+}
+
+.card-box {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 30px;
+  max-width: 500px;
+  margin: 40px auto;
+  overflow-wrap: break-word;
+}
+
+.cloze {
+  color: #c0392b !important;
+  font-weight: bold;
+}
+
+hr#answer {
+  border: none;
+  border-top: 2px solid #dcdde1;
+  margin: 20px 0;
+}
+
+.card-box img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* =======================================================
+   2. DUNKELMODUS (Anki Desktop & AnkiMobile)
+   ======================================================= */
+.nightMode.card {
+  color: #f5f6fa;
+  background-color: #1e1e24;
+}
+
+.nightMode .card-box {
+  background-color: #2a2b36;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.nightMode .cloze {
+  color: #e74c3c !important;
+}
+
+.nightMode hr#answer {
+  border-top-color: #4a4b56;
+}
+
+/* =======================================================
+   3. DUNKELMODUS (AnkiWeb)
+   ======================================================= */
+@media (prefers-color-scheme: dark) {
+  .card {
+    color: #f5f6fa;
+    background-color: #1e1e24;
   }
-  
-  /* Standard-Farbe für Lückentexte (Cloze) */
-  .cloze {
-    color: #c0392b !important;
-    font-weight: bold;
-  }
-  
-  /* =======================================================
-     2. DUNKELMODUS FÜR ANKI APPS (Desktop & Mobile)
-     ======================================================= */
-  .nightMode.card { color: #f5f6fa; background-color: #1e1e24; }
-  .nightMode .card-box { background-color: #2a2b36; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
-  .nightMode body { background: linear-gradient(135deg, #141419 0%, #282c34 100%); }
-  .nightMode .cloze { color: #e74c3c !important; }
-  
-  /* =======================================================
-     3. DUNKELMODUS FÜR ANKIWEB (Browser)
-     ======================================================= */
-  @media (prefers-color-scheme: dark) {
-    .card { 
-      color: #f5f6fa; 
-      background-color: #1e1e24; 
-    }
-    
-    .card-box { 
-      background-color: #2a2b36; 
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); 
-    }
-    
-    body { 
-      background: linear-gradient(135deg, #141419 0%, #282c34 100%); 
-    }
-  
-    .cloze {
-      color: #e74c3c !important;
-    }
-  }
-  
-  /* =======================================================
-     4. RESPONSIVE TABELLEN & CLOZE-OPTIMIERUNG
-     ======================================================= */
-  
-  /* Verhindert das Herausragen: Fügt Scrollbalken hinzu, wenn die Tabelle zu breit wird */
+
   .card-box {
-    overflow-x: auto;
+    background-color: #2a2b36;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   }
-  
-  /* Optimierung für alle Tabellen innerhalb der Karte */
-  .card-box table {
-    width: 100%;
-    max-width: 100%;
-    border-collapse: collapse;
-    margin: 15px 0;
-    font-size: 14px; /* Macht den Text in Tabellen gezielt kleiner (Standard ist 20px) */
-    line-height: 1.4;
+
+  .cloze {
+    color: #e74c3c !important;
   }
-  
-  /* Styling für Tabellenzellen, damit sie sauber aussehen */
-  .card-box th, 
+
+  hr#answer {
+    border-top-color: #4a4b56;
+  }
+}
+
+/* =======================================================
+   4. TABELLEN
+   ======================================================= */
+.card-box {
+  overflow-x: auto;
+}
+
+.card-box table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.card-box th,
+.card-box td {
+  padding: 8px 10px;
+  border: 1px solid #dcdde1;
+  text-align: left;
+}
+
+.nightMode .card-box th,
+.nightMode .card-box td {
+  border-color: #4a4b56;
+}
+
+@media (prefers-color-scheme: dark) {
+  .card-box th,
   .card-box td {
-    padding: 8px 10px;
-    border: 1px solid #dcdde1;
-    text-align: left;
+    border-color: #4a4b56;
   }
-  
-  /* Dunkelmodus-Anpassung für die Tabellen-Linien */
-  .nightMode .card-box th, 
-  .nightMode .card-box td,
-  @media (prefers-color-scheme: dark) {
-    .card-box th, 
-    .card-box td {
-      border-color: #4a4b56; /* Dunklere Linien im Darkmode */
-    }
-  }
-  
-  /* Verhindert, dass die Lückentexte in Tabellen das Layout verzerren */
-  .card-box table .cloze {
-    white-space: nowrap; /* Verhindert hässliche Zeilenumbrüche mitten im Lückentext-Wort */
+}
+
+.card-box table .cloze {
+  white-space: nowrap;
+}
+
+/* =======================================================
+   5. MOBILE – weniger Rand
+   ======================================================= */
+@media (max-width: 550px) {
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;          /* kein Dokument-Scroll – nur .card scrollt bei Bedarf */
   }
 
-  /* =======================================================
-     5. ADD-ON NOTIZTYPEN (MC, Image Occlusion)
-     ======================================================= */
+  .card {
+    margin: 0;
+    padding: 28px 6px 8px;
+    box-sizing: border-box;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 
-  /* Multiple Choice (AllInOne) */
-  .mc-question { text-align: left; max-width: 600px; }
-  .mc-options { max-width: 600px; margin: 0 auto; }
-  #myH1 { margin-top: 0; font-size: 1.15em; }
-  #canswerresult { margin-top: 1em; }
+  .card-box {
+    margin: 0;
+    padding: 16px;
+    max-width: none;
+    width: auto;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    box-shadow: none;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
 
-  /* Natives Image Occlusion (Bildverdeckung) */
-  .io-native-header { margin-bottom: 1em; text-align: center; }
-  #image-occlusion-container { margin: 0 auto; }
+  .nightMode .card-box {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* =======================================================
+   6. ADD-ON NOTIZTYPEN
+   ======================================================= */
+.mc-question { text-align: left; max-width: 600px; }
+.mc-options { max-width: 600px; margin: 0 auto; }
+#myH1 { margin-top: 0; font-size: 1.15em; }
+#canswerresult { margin-top: 1em; }
+
+.io-native-header { margin-bottom: 1em; text-align: center; }
+#image-occlusion-container { margin: 0 auto; }
+
+#toggle {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #dcdde1;
+  background: #ffffff;
+  cursor: pointer;
+  margin: 1em auto;
+  font-size: 0.85em;
+}
+
+.nightMode #toggle {
+  background: #2a2b36;
+  border-color: #4a4b56;
+  color: #f5f6fa;
+}
+
+@media (prefers-color-scheme: dark) {
   #toggle {
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 1px solid #dcdde1;
-    background: #ffffff;
-    cursor: pointer;
-    margin: 1em auto;
-    font-size: 0.85em;
+    background: #2a2b36;
+    border-color: #4a4b56;
+    color: #f5f6fa;
   }
-  .nightMode #toggle,
-  @media (prefers-color-scheme: dark) {
-    #toggle {
-      background: #2a2b36;
-      border-color: #4a4b56;
-      color: #f5f6fa;
-    }
-  }
-  
+}

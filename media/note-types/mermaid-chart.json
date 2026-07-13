@@ -1,0 +1,16 @@
+{
+  "name": "Mermaid Chart (Lückentext)",
+  "type": "cloze",
+  "managed_by_addon": false,
+  "fields": [
+    "Text",
+    "Rückseite Extra"
+  ],
+  "css": "@import url(\"_global_style.css\");\n\n.mermaid-out {\n  display: flex;\n  justify-content: center;\n  overflow-x: auto;\n  min-height: 2rem;\n}\n\n.mermaid-out svg {\n  max-width: 100%;\n  height: auto;\n}\n\n.mermaid-src {\n  display: none !important;\n}\n\n.mermaid-plain {\n  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\n  font-size: 0.85em;\n  white-space: pre-wrap;\n  opacity: 0.75;\n  margin-top: 0.5em;\n}\n\n.mermaid-err {\n  text-align: left;\n  font-size: 0.85em;\n  white-space: pre-wrap;\n  color: #c0392b;\n  max-width: 100%;\n}\n\n.nightMode .mermaid-err {\n  color: #e74c3c;\n}\n",
+  "templates": {
+    "Lückentext": {
+      "Front": "<div class=\"card-box\">\n  <div id=\"mermaid-out\" class=\"mermaid-out\"></div>\n  <div id=\"mermaid-src-cloze\" class=\"mermaid-src\">{{cloze:Text}}</div>\n  <div id=\"mermaid-src-raw\" class=\"mermaid-src\">{{Text}}</div>\n  <pre class=\"mermaid-plain\">{{text:Text}}</pre>\n</div>\n\n<script src=\"_mermaid.min.js\"></script>\n<script src=\"_mermaid_card.js\"></script>",
+      "Back": "<div class=\"card-box\">\n  <div id=\"mermaid-out\" class=\"mermaid-out\"></div>\n  <div id=\"mermaid-src-cloze\" class=\"mermaid-src\">{{cloze:Text}}</div>\n  <div id=\"mermaid-src-raw\" class=\"mermaid-src\">{{Text}}</div>\n  <pre class=\"mermaid-plain\">{{text:Text}}</pre>\n  {{#Rückseite Extra}}\n    <hr id=\"answer\">\n    {{Rückseite Extra}}\n  {{/Rückseite Extra}}\n</div>\n\n<script src=\"_mermaid.min.js\"></script>\n<script src=\"_mermaid_card.js\"></script>"
+    }
+  }
+}

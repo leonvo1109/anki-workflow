@@ -19,6 +19,8 @@ import re
 import sys
 from pathlib import Path
 
+from anki_style import resolve_css
+
 try:
     import requests
 except ImportError:
@@ -70,7 +72,8 @@ def export_model_to_file(model: dict, path: Path) -> None:
 
 
 def fingerprint(model: dict) -> str:
-    payload = json.dumps({"css": model["css"], "templates": model["templates"]}, sort_keys=True)
+    css = resolve_css(model["css"])
+    payload = json.dumps({"css": css, "templates": model["templates"]}, sort_keys=True)
     return hashlib.sha256(payload.encode()).hexdigest()[:12]
 
 
@@ -100,9 +103,16 @@ def push_one(path: Path, *, force_addon: bool) -> bool:
         print(f"skip: {name} (managed_by_addon – nur Referenz im Repo)")
         return False
 
-    invoke("updateModelStyling", model={"name": name, "css": model["css"]})
+    try:
+        invoke("findModelsByName", modelNames=[name])
+    except RuntimeError:
+        print(f"skip: {name} (nicht in Anki)")
+        return False
+
+    css = resolve_css(model["css"])
+    invoke("updateModelStyling", model={"name": name, "css": css})
     invoke("updateModelTemplates", model={"name": name, "templates": model["templates"]})
-    print(f"push: {name} ← {path.name}")
+    print(f"push: {name} ← {path.name} (CSS eingebettet)")
     return True
 
 
@@ -116,7 +126,8 @@ def cmd_push(slug: str | None, force_addon: bool) -> int:
 
     pushed = sum(push_one(p, force_addon=force_addon) for p in paths)
     if pushed:
-        print("Tipp: Auch CSS pushen → python scripts/sync_anki_style.py push")
+        print("Tipp: python scripts/sync_anki_style.py push")
+        print("Dann in Anki Desktop synchronisieren (Medien abwarten) → AnkiMobile sync.")
     return 0
 
 

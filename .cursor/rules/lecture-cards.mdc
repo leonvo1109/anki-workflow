@@ -11,6 +11,11 @@ alwaysApply: false
 - Skip slides with `"organizational": true`
 - Course import config: sibling `anki.json` (Deck-Hierarchie); curated in `cards/anki_curated.json`
 - **Keine Kapitel-Tags** — Struktur nur über Subdecks; Workflow über `wf::…`-Tags
+- **Folien-Tags:** `folie-XX` (Vorlesung/Übung/Praktikum-Seite); sonst `folie-unbekannt`
+- **Übungen:** `uebung` (+ optional `uebung-aufgabe-NN` bei nummerierten Aufgaben-PDFs)
+- **Praktika:** `praktikum-NN` wenn Unterlage `C_Übungsblatt_NN` o. ä. vorhanden
+- Bulk: `python scripts/tag_folien.py --semester lectures/semester4`
+- **Keine redundanten Tags** — kein `vorlesung`/Themen-Slug; behalten: `wf::*`, `mc-interactive`, `io-stub`, `uebung`, `praktikum-*`
 - **Session:** Nutzer taggt in Anki → `process_session_tags.py` → `session_queue.json` lesen und abarbeiten
 - **Gesperrt:** `wf::lock` / `anki_locked.json` — nicht überschreiben
 - IO diagrams: use `occlusion/manifest.json` → `import_io_stubs.py`; do not draw SVG masks via MCP

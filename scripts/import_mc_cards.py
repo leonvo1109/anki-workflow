@@ -220,7 +220,13 @@ def collect_migrate_notes(cfg: CourseConfig) -> tuple[list[dict], list[int]]:
     return notes, delete_ids
 
 
+def ensure_decks(notes: list[dict]) -> None:
+    for deck in {n["deckName"] for n in notes if n.get("deckName")}:
+        invoke("createDeck", deck=deck)
+
+
 def import_notes(notes: list[dict]) -> tuple[int, int]:
+    ensure_decks(notes)
     created = skipped = 0
     for note in notes:
         try:

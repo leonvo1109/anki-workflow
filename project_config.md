@@ -208,7 +208,9 @@ Alternativ kann Cursor dieselben Notizen per `anki_create_notes` anlegen, wenn B
 
    Keine Kapitel-Tags (`tag_prefix::slug`) mehr — das spiegelt die Deck-Hierarchie nur redundant.
 
-10. **Manuell gesperrte Karten** — `wf::lock` + `--sync-locks`, oder `anki_locked.json`. Gesperrte curated-Einträge nicht ändern.
+11. **Folien-Tags (Pflicht)** — genau ein `folie-XX` pro Karte (Seitenzahl aus `processed/*/slides.json`; bei unklarer Zuordnung `folie-unbekannt`). Keine zusätzlichen Kapitel-/Quellen-Tags. Bulk-Retagging: `python scripts/tag_folien.py --semester lectures/semester4`. Behalten: `wf::*`, `mc-interactive`, `io-stub`.
+
+12. **Manuell gesperrte Karten** — `wf::lock` + `--sync-locks`, oder `anki_locked.json`. Gesperrte curated-Einträge nicht ändern.
 
 ---
 

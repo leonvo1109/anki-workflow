@@ -73,9 +73,15 @@ def cmd_push() -> int:
         return 1
     dest = anki_css_path()
     dest.parent.mkdir(parents=True, exist_ok=True)
+    # Anki erkennt nur geänderte Inhalte oft nicht – Datei neu anlegen triggert Media-Sync.
+    if dest.exists():
+        dest.unlink()
     shutil.copy2(REPO_CSS, dest)
+    beacon = dest.parent / "_global_style.sync"
+    beacon.write_text(str(dest.stat().st_mtime_ns), encoding="utf-8")
     print(f"push: {REPO_CSS} → {dest}")
-    print("Tipp: In Anki eine Karte in der Vorschau öffnen (ggf. Editor schließen/neu öffnen).")
+    print("Wichtig: In Anki Desktop synchronisieren und auf „Medien-Sync abgeschlossen“ warten.")
+    print("Danach AnkiMobile synchronisieren. CSS liegt zusätzlich in den Notiztypen eingebettet.")
     return 0
 
 

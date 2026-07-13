@@ -18,7 +18,9 @@ Anki-Karten aus Vorlesungsfolien. Nutzer-Doku: [README.md](README.md) · Befehle
 
 ## Lern-Session (Workflow-Tags)
 
-**Struktur:** Kapitel = **Deck-Hierarchie** (`anki.json` → `deck_suffix`). Tags nur für **Workflow**, nicht für Kapitel.
+**Struktur:** Kapitel = **Deck-Hierarchie** (`anki.json` → `deck_suffix`). Tags nur für **Workflow** und **Folienreferenz** (`folie-XX`), nicht für Kapitel/Thema.
+
+**Folien-Tags:** Jede Karte genau ein `folie-XX` (aus `slides.json`; sonst `folie-unbekannt`). Bulk: `python scripts/tag_folien.py --semester lectures/semester4`. Keine redundanten Tags (`vorlesung`, `kapitel*`, Themen-Slugs) — Deck reicht.
 
 **Während des Lernens** (in Anki, Strg+T):
 - Problem markieren: `wf::fix::unclear`, `wf::fix::answer`, `wf::fix::typo`, … (`python scripts/process_session_tags.py --list-tags`)
