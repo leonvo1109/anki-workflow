@@ -9,8 +9,8 @@
   "css": "@import url(\"_global_style.css\");\n",
   "templates": {
     "Karte 1": {
-      "Front": "<div class=\"card-box\">\n  {{Vorderseite}}\n</div>\n",
-      "Back": "<div class=\"card-box\">\n  {{Vorderseite}}\n  <hr id=\"answer\">\n  {{Rückseite}}\n</div>\n"
+      "Front": "<div class=\"card-box\">\n  {{Vorderseite}}\n</div>\n<script src=\"_highlight.min.js\"></script>\n<script src=\"_code_highlight.js\"></script>",
+      "Back": "<div class=\"card-box\">\n  {{Vorderseite}}\n  <hr id=\"answer\">\n  {{Rückseite}}\n</div>\n<script src=\"_highlight.min.js\"></script>\n<script src=\"_code_highlight.js\"></script>"
     }
   }
 }

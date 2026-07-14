@@ -19,8 +19,18 @@ from pathlib import Path
 
 from anki_paths import ANKI_PROFILE, collection_media
 
-REPO_CSS = Path(__file__).resolve().parent.parent / "media" / "_global_style.css"
+REPO_MEDIA = Path(__file__).resolve().parent.parent / "media"
+REPO_CSS = REPO_MEDIA / "_global_style.css"
 ANKI_CSS_NAME = "_global_style.css"
+
+# Mit sync_anki_style.py push nach collection.media (AnkiMobile braucht Medien-Sync)
+MEDIA_FILES = (
+    "_global_style.css",
+    "_highlight.min.js",
+    "_code_highlight.js",
+    "_hljs_github.min.css",
+    "_hljs_github-dark.min.css",
+)
 
 
 def anki_css_path() -> Path:
@@ -38,21 +48,24 @@ def ensure_repo_file() -> None:
 
 def cmd_status() -> int:
     ensure_repo_file()
-    anki = anki_css_path()
-    if not anki.exists():
-        print(f"Anki: fehlt ({anki})")
-        print(f"Projekt: {REPO_CSS} ({REPO_CSS.stat().st_size} bytes)")
-        return 1
-    same = filecmp.cmp(REPO_CSS, anki, shallow=False)
+    drift = 0
     print(f"Profil:     {ANKI_PROFILE}")
-    print(f"Projekt:    {REPO_CSS}")
-    print(f"Anki media: {anki}")
-    if same:
-        print("Status:     ✓ synchron")
-        return 0
-    print("Status:     ✗ unterschiedlich")
-    print(f"  Projekt: {REPO_CSS.stat().st_mtime:.0f}  Anki: {anki.stat().st_mtime:.0f}")
-    return 1
+    for name in MEDIA_FILES:
+        repo = REPO_MEDIA / name
+        anki = collection_media() / name
+        if not repo.exists():
+            print(f"✗ {name}: fehlt im Projekt")
+            drift += 1
+            continue
+        if not anki.exists():
+            print(f"✗ {name}: fehlt in Anki")
+            drift += 1
+            continue
+        same = filecmp.cmp(repo, anki, shallow=False)
+        print(f"{'✓' if same else '✗'} {name}")
+        if not same:
+            drift += 1
+    return 1 if drift else 0
 
 
 def cmd_pull() -> int:
@@ -68,18 +81,21 @@ def cmd_pull() -> int:
 
 def cmd_push() -> int:
     ensure_repo_file()
-    if not REPO_CSS.exists() or REPO_CSS.stat().st_size == 0:
-        print(f"Projektdatei leer oder fehlt: {REPO_CSS}", file=sys.stderr)
+    dest_dir = collection_media()
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    missing = [name for name in MEDIA_FILES if not (REPO_MEDIA / name).exists()]
+    if missing:
+        print("Fehlende Projektdateien: " + ", ".join(missing), file=sys.stderr)
         return 1
-    dest = anki_css_path()
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    # Anki erkennt nur geänderte Inhalte oft nicht – Datei neu anlegen triggert Media-Sync.
-    if dest.exists():
-        dest.unlink()
-    shutil.copy2(REPO_CSS, dest)
-    beacon = dest.parent / "_global_style.sync"
-    beacon.write_text(str(dest.stat().st_mtime_ns), encoding="utf-8")
-    print(f"push: {REPO_CSS} → {dest}")
+    for name in MEDIA_FILES:
+        src = REPO_MEDIA / name
+        dest = dest_dir / name
+        if dest.exists():
+            dest.unlink()
+        shutil.copy2(src, dest)
+        print(f"push: {src} → {dest}")
+    beacon = dest_dir / "_global_style.sync"
+    beacon.write_text(str((dest_dir / MEDIA_FILES[0]).stat().st_mtime_ns), encoding="utf-8")
     print("Wichtig: In Anki Desktop synchronisieren und auf „Medien-Sync abgeschlossen“ warten.")
     print("Danach AnkiMobile synchronisieren. CSS liegt zusätzlich in den Notiztypen eingebettet.")
     return 0
