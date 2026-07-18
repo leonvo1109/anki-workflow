@@ -100,7 +100,29 @@ Gemeinsames Styling (alle editierbaren Typen):
 
 ## Einfach (Antwort eintippen)
 
-Wie **Einfach** – gleiche `card-box`-Vorlagen. Zusätzlich Type-In-Feld in Anki aktiv.
+Wie **Einfach**, zusätzlich mit Type-In über `{{type:Rückseite}}`:
+
+### Vorderseite
+
+```html
+<div class="card-box">
+  {{Vorderseite}}
+  <div class="type-answer">{{type:Rückseite}}</div>
+</div>
+```
+
+### Rückseite
+
+```html
+<div class="card-box">
+  {{Vorderseite}}
+  <hr id="answer">
+  <div class="type-answer">{{type:Rückseite}}</div>
+</div>
+```
+
+Vorne erscheint das Eingabefeld; hinten der Vergleich (getippt vs. korrekt).  
+Styling: `#typeans` / `.type-answer` in `_global_style.css` (Desktop vs. Mobile unterschiedlich).
 
 ---
 

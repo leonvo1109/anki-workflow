@@ -22,6 +22,7 @@
 .card-box {
   background-color: #ffffff;
   border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   padding: 30px;
   max-width: 500px;
@@ -55,6 +56,7 @@ hr#answer {
 
 .nightMode .card-box {
   background-color: #2a2b36;
+  border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
@@ -77,6 +79,7 @@ hr#answer {
 
   .card-box {
     background-color: #2a2b36;
+    border-color: rgba(255, 255, 255, 0.08);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   }
 
@@ -213,7 +216,72 @@ hr#answer {
 }
 
 /* =======================================================
-   6. MOBILE – weniger Rand
+   6. TYPE-IN (Antwort eintippen)
+   Desktop: Eingabefeld in der Karte (#typeans).
+   AnkiMobile: oft separates System-Feld unten; in der Karte
+   bleibt Prompt/Vergleich – Abstände bewusst schlank halten.
+   ======================================================= */
+.type-answer {
+  margin-top: 18px;
+}
+
+#typeans {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 1em;
+  line-height: 1.4;
+  font-family: inherit;
+  color: inherit;
+  background: #f5f6fa;
+  border: 1px solid #dcdde1;
+  border-radius: 8px;
+}
+
+/* Vergleich auf der Rückseite (code#typeans) */
+code#typeans {
+  display: block;
+  white-space: pre-wrap;
+  font-variant-ligatures: none;
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.nightMode #typeans {
+  background: #1e1e24;
+  border-color: #4a4b56;
+  color: #f5f6fa;
+}
+
+@media (prefers-color-scheme: dark) {
+  #typeans {
+    background: #1e1e24;
+    border-color: #4a4b56;
+    color: #f5f6fa;
+  }
+}
+
+.typeGood { background: #c8e6c9; color: #1b5e20; }
+.typeBad { background: #ffcdd2; color: #b71c1c; }
+.typeMissed { background: #e0e0e0; color: #424242; }
+
+.nightMode .typeGood { background: #2e7d32; color: #e8f5e9; }
+.nightMode .typeBad { background: #c62828; color: #ffebee; }
+.nightMode .typeMissed { background: #424242; color: #eeeeee; }
+
+@media (prefers-color-scheme: dark) {
+  .typeGood { background: #2e7d32; color: #e8f5e9; }
+  .typeBad { background: #c62828; color: #ffebee; }
+  .typeMissed { background: #424242; color: #eeeeee; }
+}
+
+/* =======================================================
+   7. MOBILE – weniger Rand + Type-In kompakter
    ======================================================= */
 @media (max-width: 550px) {
   html, body {
@@ -252,10 +320,42 @@ hr#answer {
     overflow-x: auto;
     max-width: 100%;
   }
+
+  /* Type-In: enger an die Frage, kein Extra-Overflow (AnkiMobile #typeans oft 95%) */
+  .type-answer {
+    margin-top: 12px;
+  }
+
+  #typeans {
+    width: 100% !important;
+    margin-top: 0 !important;
+    padding: 10px;
+    font-size: 16px;           /* verhindert iOS-Zoom beim Tippen */
+  }
+
+  code#typeans {
+    padding: 0;
+    font-size: 1em;
+  }
+}
+
+/* AnkiMobile setzt .mobile / html.iphone – zusätzlich zu max-width */
+.mobile .type-answer,
+html.iphone .type-answer,
+html.ipad .type-answer {
+  margin-top: 12px;
+}
+
+.mobile #typeans,
+html.iphone #typeans,
+html.ipad #typeans {
+  width: 100% !important;
+  margin-top: 0 !important;
+  box-sizing: border-box;
 }
 
 /* =======================================================
-   7. ADD-ON NOTIZTYPEN
+   8. ADD-ON NOTIZTYPEN
    ======================================================= */
 .mc-question { text-align: left; max-width: 600px; }
 .mc-options { max-width: 600px; margin: 0 auto; }

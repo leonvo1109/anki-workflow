@@ -130,15 +130,19 @@ def make_mc_card(front: str, back: str, distractors: list[str]) -> dict:
 
 
 def curated_to_note(item: dict, deck: str) -> dict:
+    tags = item.get("tags") or []
     if item["type"] == "luecke":
-        return {"deckName": deck, "modelName": "Lückentext", "fields": {"Text": item["text"], "Rückseite Extra": ""}}
-    if item["type"] == "mc":
-        base = make_mc_card(item["front"], item["back"], item.get("distractors", []))
-        base["deckName"] = deck
-        return base
-    if item["type"] == "tf":
-        return {"deckName": deck, "modelName": "Einfach", "fields": {"Vorderseite": item["front"], "Rückseite": item["back"]}}
-    return {"deckName": deck, "modelName": "Einfach", "fields": {"Vorderseite": item["front"], "Rückseite": item["back"]}}
+        note = {"deckName": deck, "modelName": "Lückentext", "fields": {"Text": item["text"], "Rückseite Extra": item.get("extra", "")}}
+    elif item["type"] == "mc":
+        note = make_mc_card(item["front"], item["back"], item.get("distractors", []))
+        note["deckName"] = deck
+    elif item["type"] == "tf":
+        note = {"deckName": deck, "modelName": "Einfach", "fields": {"Vorderseite": item["front"], "Rückseite": item["back"]}}
+    else:
+        note = {"deckName": deck, "modelName": "Einfach", "fields": {"Vorderseite": item["front"], "Rückseite": item["back"]}}
+    if tags:
+        note["tags"] = tags
+    return note
 
 
 def is_low_quality(front: str, back: str, filters: dict[str, re.Pattern]) -> bool:
